@@ -78,12 +78,29 @@ app.post('/api/azure-login', async (req, res) => {
             console.log('No existing token, will start login process...');
         }
 
-        // Execute Azure CLI login command (no timeout to allow interactive login)
+        // Execute Azure CLI login command with specific output format
         console.log('Executing: az login --use-device-code');
-        const { stdout, stderr } = await execAsync('az login --use-device-code');
+        const { stdout, stderr } = await execAsync('az login --use-device-code --output json');
 
         console.log('Login stdout:', stdout);
         console.log('Login stderr:', stderr);
+
+        // Try to parse JSON output first
+        try {
+            const jsonOutput = JSON.parse(stdout);
+            if (jsonOutput && jsonOutput.user_code && jsonOutput.verification_url) {
+                console.log('Device code found in JSON output:', jsonOutput.user_code);
+                return res.json({
+                    loginRequired: true,
+                    loginUrl: jsonOutput.verification_url,
+                    deviceCode: jsonOutput.user_code,
+                    message: 'Please complete device code authentication',
+                    expires_in: jsonOutput.expires_in || 900
+                });
+            }
+        } catch (jsonError) {
+            console.log('JSON parse failed, trying text parsing');
+        }
 
         // Parse the device code from stderr (where Azure CLI outputs it)
         const deviceCodeMatch = stderr.match(/To sign in, use a web browser to open the page ([^\s]+) and enter the code ([^\s]+) to authenticate/);
