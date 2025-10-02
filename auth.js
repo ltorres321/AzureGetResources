@@ -76,8 +76,10 @@ async function startAuthentication() {
             console.log('Showing device code:', data.deviceCode); // Debug log
 
             // Hide welcome section and show auth section first
+            console.log('Hiding welcome section and showing auth section');
             document.getElementById('welcome-section').classList.add('hidden');
             document.getElementById('auth-section').classList.remove('hidden');
+            console.log('Auth section classes:', document.getElementById('auth-section').className);
 
             // Show device code authentication UI
             showDeviceCodeLogin(data.loginUrl, data.deviceCode, data.demo);
@@ -182,57 +184,32 @@ function showDeviceCodeLogin(loginUrl, deviceCode, isDemo = false) {
         </div>
     ` : '';
 
+    // Create a more visible and prominent display
     statusDiv.innerHTML = `
-        <div class="device-code-container">
-            <div class="device-code-header">
-                <h3>${isDemo ? '🔧' : '🔐'} Complete Your Azure Authentication</h3>
-                <p class="instructions">Follow these steps to authenticate:</p>
-                ${demoNotice}
+        <div style="background: #0078d4; color: white; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center;">
+            <h2 style="margin: 0 0 15px 0; color: white;">🔐 Azure Authentication Required</h2>
+            <div style="background: white; color: #0078d4; padding: 20px; border-radius: 8px; margin: 15px 0; font-family: monospace; font-size: 24px; font-weight: bold; letter-spacing: 3px;">
+                ${deviceCode}
             </div>
-
-            <div class="device-code-display">
-                <div class="code-section">
-                    <h4>📱 Your Device Code:</h4>
-                    <div class="device-code-box">${deviceCode}</div>
-                    <p class="code-instruction">Copy this code - you'll need to enter it in the next step</p>
-                </div>
-
-                <div class="url-section">
-                    <h4>🌐 Login URL:</h4>
-                    <div class="login-url">
-                        <a href="${loginUrl}" target="_blank" class="login-link">${loginUrl}</a>
-                    </div>
-                    <p class="url-instruction">Click the link above or copy and paste it into your browser</p>
-                </div>
+            <p style="margin: 15px 0; font-size: 18px; color: white;">📱 Copy this device code</p>
+            <div style="margin: 15px 0;">
+                <a href="${loginUrl}" target="_blank" style="background: #28a745; color: white; padding: 15px 30px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block; margin: 10px;">
+                    🌐 Open Login Page
+                </a>
             </div>
-
-            <div class="step-by-step">
-                <h4>Step-by-Step Instructions:</h4>
-                <ol>
-                    <li><strong>Open your web browser</strong> and navigate to the login URL above</li>
-                    <li><strong>Sign in</strong> with your Azure credentials when prompted</li>
-                    <li><strong>Enter the device code</strong> <code>${deviceCode}</code> when asked</li>
-                    <li><strong>Complete the authentication</strong> in your browser</li>
-                    <li><strong>Return here</strong> and click the button below to verify</li>
-                </ol>
-            </div>
-
-            <div class="action-buttons">
-                <button onclick="checkAuthenticationStatus()" class="btn-primary btn-large">
-                    ✅ I've completed authentication - Verify Now
-                </button>
-                <button onclick="startOver()" class="btn-secondary">
-                    🔄 Start Over
-                </button>
-            </div>
-
-            <div class="waiting-note">
-                <p>⏳ <strong>Waiting for authentication...</strong> This process is secure and your credentials are protected.</p>
-            </div>
+            <p style="margin: 15px 0; color: white;">1. Click the button above to open the login page<br>
+            2. Sign in with your Azure credentials<br>
+            3. Enter the device code: <strong>${deviceCode}</strong><br>
+            4. Return here and click "Verify" below</p>
+            <button onclick="checkAuthenticationStatus()" style="background: #ffc107; color: #212529; padding: 15px 30px; border: none; border-radius: 6px; font-weight: bold; font-size: 16px; cursor: pointer; margin: 10px;">
+                ✅ I've Completed Authentication - Verify Now
+            </button>
         </div>
     `;
 
     console.log('Device code HTML set, length:', statusDiv.innerHTML.length);
+    console.log('Auth section visibility:', getComputedStyle(document.getElementById('auth-section')).display);
+    console.log('Status div content preview:', statusDiv.innerHTML.substring(0, 200) + '...');
 }
 
 // Check authentication status after device code entry
