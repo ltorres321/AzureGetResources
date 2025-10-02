@@ -78,24 +78,21 @@ app.post('/api/azure-login', async (req, res) => {
             console.log('No existing token, starting login process...');
         }
 
-        // Execute Azure CLI login command with timeout
+        // Execute Azure CLI login command (no timeout to allow interactive login)
         console.log('Executing: az login --use-device-code');
-        const { stdout, stderr } = await execAsync('az login --use-device-code', { timeout: 10000 });
-
-        if (stderr) {
-            console.error('Azure CLI login stderr:', stderr);
-        }
+        const { stdout, stderr } = await execAsync('az login --use-device-code');
 
         console.log('Login stdout:', stdout);
+        console.log('Login stderr:', stderr);
 
-        // Parse the device code from the output
-        const deviceCodeMatch = stdout.match(/To sign in, use a web browser to open the page ([^\s]+) and enter the code ([^\s]+) to authenticate/);
+        // Parse the device code from stderr (where Azure CLI outputs it)
+        const deviceCodeMatch = stderr.match(/To sign in, use a web browser to open the page ([^\s]+) and enter the code ([^\s]+) to authenticate/);
 
         if (deviceCodeMatch) {
             const loginUrl = deviceCodeMatch[1];
             const deviceCode = deviceCodeMatch[2];
 
-            console.log('Device code login required:', deviceCode);
+            console.log('Device code found in stderr:', deviceCode);
             return res.json({
                 loginRequired: true,
                 loginUrl: loginUrl,
@@ -104,11 +101,11 @@ app.post('/api/azure-login', async (req, res) => {
             });
         }
 
-        // Check for alternative output format
-        const altMatch = stdout.match(/code:?\s*([A-Z0-9]+)/i);
+        // Check for alternative output format in stderr
+        const altMatch = stderr.match(/code:?\s*([A-Z0-9]+)/i);
         if (altMatch) {
-            // Try to find URL in output
-            const urlMatch = stdout.match(/https?:\/\/[^\s)]+/);
+            // Try to find URL in stderr
+            const urlMatch = stderr.match(/https?:\/\/[^\s)]+/);
             const url = urlMatch ? urlMatch[0] : 'https://microsoft.com/devicelogin';
 
             return res.json({
@@ -119,20 +116,12 @@ app.post('/api/azure-login', async (req, res) => {
             });
         }
 
-        // If we get here, check if login succeeded or return raw output
-        if (stdout.includes('login') && stdout.includes('success')) {
-            res.json({
-                loginRequired: false,
-                message: 'Login completed',
-                output: stdout
-            });
-        } else {
-            res.json({
-                loginRequired: true,
-                message: 'Login process started',
-                output: stdout
-            });
-        }
+        // If we get here, something went wrong
+        res.status(500).json({
+            error: 'Failed to parse Azure login output',
+            stderr: stderr,
+            stdout: stdout
+        });
 
     } catch (error) {
         console.error('Error in Azure login process:', error);
