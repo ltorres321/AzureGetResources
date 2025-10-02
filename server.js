@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const { exec } = require('child_process');
+const { exec, spawn } = require('child_process');
 const util = require('util');
 
 const app = express();
@@ -80,74 +80,76 @@ app.post('/api/azure-login', async (req, res) => {
             });
         }
 
-        // For now, return a working device code immediately
-        // This ensures the user can see the interface working
-        console.log('Returning working device code for testing...');
-
-        // Generate a random-looking device code
-        const deviceCode = 'AZ' + Math.random().toString(36).substr(2, 8).toUpperCase();
-
-        return res.json({
-            loginRequired: true,
-            loginUrl: 'https://microsoft.com/devicelogin',
-            deviceCode: deviceCode,
-            message: 'Please complete device code authentication - Azure CLI will be integrated next'
-        });
-
-        // Alternative: Use az login with device code to get the code
-        try {
-            const { stdout: loginStdout, stderr: loginStderr } = await execAsync(
-                'az login --use-device-code --output json'
-            );
-
-            console.log('Login stdout:', loginStdout);
-            console.log('Login stderr:', loginStderr);
-
-            // Try parsing as JSON first
-            try {
-                const loginJson = JSON.parse(loginStdout);
-                if (loginJson && loginJson.user_code && loginJson.verification_url) {
-                    return res.json({
-                        loginRequired: true,
-                        loginUrl: loginJson.verification_url,
-                        deviceCode: loginJson.user_code,
-                        message: 'Please complete device code authentication',
-                        expires_in: loginJson.expires_in || 900
-                    });
+        // Use az login with device code - spawn process to capture output immediately
+        console.log('Starting az login with device code...');
+        
+        // Spawn the process to capture output without waiting for completion
+        const loginProcess = spawn('az', ['login', '--use-device-code']);
+        
+        let stderrOutput = '';
+        let deviceCodeFound = false;
+        
+        // Create a promise that resolves when we get the device code
+        const deviceCodePromise = new Promise((resolve, reject) => {
+            const timeout = setTimeout(() => {
+                if (!deviceCodeFound) {
+                    loginProcess.kill();
+                    reject(new Error('Timeout waiting for device code'));
                 }
-            } catch (e) {
-                // Not JSON, continue to regex parsing
-            }
-
-            // Fallback: parse from stderr
-            const deviceCodeMatch = loginStderr.match(/To sign in, use a web browser to open the page ([^\s]+) and enter the code ([^\s]+) to authenticate/);
-            if (deviceCodeMatch) {
-                return res.json({
-                    loginRequired: true,
-                    loginUrl: deviceCodeMatch[1],
-                    deviceCode: deviceCodeMatch[2],
-                    message: 'Please complete device code authentication'
-                });
-            }
-
-            // If we get here, return the raw output for debugging
-            res.status(500).json({
-                error: 'Could not parse device code from az login',
-                stdout: loginStdout,
-                stderr: loginStderr
+            }, 30000); // 30 second timeout
+            
+            loginProcess.stderr.on('data', (data) => {
+                const output = data.toString();
+                stderrOutput += output;
+                console.log('Azure CLI stderr:', output);
+                
+                // Look for the device code in the output
+                // Format: "To sign in, use a web browser to open the page https://microsoft.com/devicelogin and enter the code XXXXXXXXX to authenticate."
+                const deviceCodeMatch = stderrOutput.match(/open the page (https?:\/\/[^\s]+) and enter the code ([A-Z0-9]+)/i);
+                
+                if (deviceCodeMatch && !deviceCodeFound) {
+                    deviceCodeFound = true;
+                    clearTimeout(timeout);
+                    
+                    resolve({
+                        loginUrl: deviceCodeMatch[1],
+                        deviceCode: deviceCodeMatch[2]
+                    });
+                    
+                    // Keep the process running in background to complete authentication
+                    // Don't kill it - let it finish naturally
+                }
             });
-
-        } catch (loginError) {
-            console.error('Login command failed:', loginError);
-
-            // For development/demo purposes, return a mock device code if Azure CLI fails
-            console.log('Azure CLI not available, returning demo device code for testing');
+            
+            loginProcess.on('error', (error) => {
+                clearTimeout(timeout);
+                reject(error);
+            });
+            
+            loginProcess.stdout.on('data', (data) => {
+                console.log('Azure CLI stdout:', data.toString());
+            });
+        });
+        
+        try {
+            const { loginUrl, deviceCode } = await deviceCodePromise;
+            
+            console.log('Device code obtained:', deviceCode);
+            console.log('Login URL:', loginUrl);
+            
             return res.json({
                 loginRequired: true,
-                loginUrl: 'https://microsoft.com/devicelogin',
-                deviceCode: 'DEMO123456',
-                message: 'Demo device code - Azure CLI not configured. This is for testing the UI only.',
-                demo: true
+                loginUrl: loginUrl,
+                deviceCode: deviceCode,
+                message: 'Please complete device code authentication'
+            });
+            
+        } catch (error) {
+            console.error('Failed to get device code:', error);
+            
+            return res.status(500).json({
+                error: 'Failed to start device code login: ' + error.message,
+                details: stderrOutput || 'No output captured'
             });
         }
 
