@@ -67,7 +67,7 @@ async function startAuthentication() {
 
         if (data.loginRequired) {
             // Show device code authentication UI
-            showDeviceCodeLogin(data.loginUrl, data.deviceCode);
+            showDeviceCodeLogin(data.loginUrl, data.deviceCode, data.demo);
             return;
         }
 
@@ -146,13 +146,21 @@ function getSelectedSubscriptions() {
 }
 
 // Show device code login interface
-function showDeviceCodeLogin(loginUrl, deviceCode) {
+function showDeviceCodeLogin(loginUrl, deviceCode, isDemo = false) {
     const statusDiv = document.getElementById('auth-status');
+    const demoNotice = isDemo ? `
+        <div class="demo-notice">
+            <h4>🔧 DEMO MODE - Azure CLI Not Configured</h4>
+            <p>This is a demo device code for testing the interface. To use with real Azure authentication, please install and configure Azure CLI.</p>
+        </div>
+    ` : '';
+
     statusDiv.innerHTML = `
         <div class="device-code-container">
             <div class="device-code-header">
-                <h3>🔐 Complete Your Azure Authentication</h3>
+                <h3>${isDemo ? '🔧' : '🔐'} Complete Your Azure Authentication</h3>
                 <p class="instructions">Follow these steps to authenticate:</p>
+                ${demoNotice}
             </div>
 
             <div class="device-code-display">

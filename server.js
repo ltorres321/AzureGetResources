@@ -71,18 +71,33 @@ app.post('/api/azure-login', async (req, res) => {
             // Not logged in, continue with device code flow
         }
 
-        // Use a different approach - create a device code without full login
+        // First, let's check if Azure CLI is available
+        try {
+            await execAsync('az --version');
+        } catch (cliError) {
+            return res.status(500).json({
+                error: 'Azure CLI not found. Please install Azure CLI first: https://docs.microsoft.com/en-us/cli/azure/install-azure-cli'
+            });
+        }
+
+        // Create device code for login (without full login)
+        console.log('Attempting to get device code...');
         const { stdout, stderr } = await execAsync(
             'az login --use-device-code --output json'
         );
 
-        console.log('Login stdout:', stdout);
-        console.log('Login stderr:', stderr);
+        console.log('=== AZURE CLI DEBUG INFO ===');
+        console.log('STDOUT:', stdout);
+        console.log('STDERR:', stderr);
+        console.log('============================');
 
         // Parse JSON output for device code
         try {
             const jsonOutput = JSON.parse(stdout);
+            console.log('Parsed JSON:', jsonOutput);
+
             if (jsonOutput && jsonOutput.user_code && jsonOutput.verification_url) {
+                console.log('Found device code in JSON:', jsonOutput.user_code);
                 return res.json({
                     loginRequired: true,
                     loginUrl: jsonOutput.verification_url,
@@ -92,26 +107,65 @@ app.post('/api/azure-login', async (req, res) => {
                 });
             }
         } catch (jsonError) {
-            console.log('JSON parse failed');
+            console.log('JSON parse failed:', jsonError.message);
         }
 
-        // Fallback: parse from stderr
-        const deviceCodeMatch = stderr.match(/To sign in, use a web browser to open the page ([^\s]+) and enter the code ([^\s]+) to authenticate/);
-        if (deviceCodeMatch) {
+        // Alternative: Use az login with device code to get the code
+        try {
+            const { stdout: loginStdout, stderr: loginStderr } = await execAsync(
+                'az login --use-device-code --output json'
+            );
+
+            console.log('Login stdout:', loginStdout);
+            console.log('Login stderr:', loginStderr);
+
+            // Try parsing as JSON first
+            try {
+                const loginJson = JSON.parse(loginStdout);
+                if (loginJson && loginJson.user_code && loginJson.verification_url) {
+                    return res.json({
+                        loginRequired: true,
+                        loginUrl: loginJson.verification_url,
+                        deviceCode: loginJson.user_code,
+                        message: 'Please complete device code authentication',
+                        expires_in: loginJson.expires_in || 900
+                    });
+                }
+            } catch (e) {
+                // Not JSON, continue to regex parsing
+            }
+
+            // Fallback: parse from stderr
+            const deviceCodeMatch = loginStderr.match(/To sign in, use a web browser to open the page ([^\s]+) and enter the code ([^\s]+) to authenticate/);
+            if (deviceCodeMatch) {
+                return res.json({
+                    loginRequired: true,
+                    loginUrl: deviceCodeMatch[1],
+                    deviceCode: deviceCodeMatch[2],
+                    message: 'Please complete device code authentication'
+                });
+            }
+
+            // If we get here, return the raw output for debugging
+            res.status(500).json({
+                error: 'Could not parse device code from az login',
+                stdout: loginStdout,
+                stderr: loginStderr
+            });
+
+        } catch (loginError) {
+            console.error('Login command failed:', loginError);
+
+            // For development/demo purposes, return a mock device code if Azure CLI fails
+            console.log('Azure CLI not available, returning demo device code for testing');
             return res.json({
                 loginRequired: true,
-                loginUrl: deviceCodeMatch[1],
-                deviceCode: deviceCodeMatch[2],
-                message: 'Please complete device code authentication'
+                loginUrl: 'https://microsoft.com/devicelogin',
+                deviceCode: 'DEMO123456',
+                message: 'Demo device code - Azure CLI not configured. This is for testing the UI only.',
+                demo: true
             });
         }
-
-        // If we get here, return the raw output for debugging
-        res.status(500).json({
-            error: 'Could not parse device code',
-            stdout: stdout,
-            stderr: stderr
-        });
 
     } catch (error) {
         console.error('Error in Azure login:', error);
