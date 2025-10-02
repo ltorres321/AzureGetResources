@@ -5,8 +5,11 @@ const AZURE_CONFIG = {
                  window.location.origin.includes('app.github.dev') ||
                  window.location.hostname === 'localhost' ?
         window.location.origin : // Use the same origin for GitHub Codespaces
-        window.location.origin.replace(/:\d+$/, ':3001') // Replace port with 3001 for local development
+        'http://localhost:3001' // Default to localhost for local development
 };
+
+console.log('API Base URL:', AZURE_CONFIG.apiBaseUrl);
+console.log('Current origin:', window.location.origin);
 
 // Global variables
 let accessToken = null;
@@ -52,6 +55,7 @@ async function startAuthentication() {
 
     try {
         // First, try to get device code for login
+        console.log('Making API call to:', `${AZURE_CONFIG.apiBaseUrl}/api/azure-login`);
         const response = await fetch(`${AZURE_CONFIG.apiBaseUrl}/api/azure-login`, {
             method: 'POST',
             headers: {
@@ -60,6 +64,7 @@ async function startAuthentication() {
             body: JSON.stringify({ email: userEmail })
         });
 
+        console.log('Response status:', response.status);
         const data = await response.json();
         console.log('API Response:', data); // Debug log
 
@@ -67,11 +72,14 @@ async function startAuthentication() {
             throw new Error(data.error || 'Failed to start Azure login');
         }
 
-        if (data.loginRequired) {
+        if (data.loginRequired && data.deviceCode) {
             console.log('Showing device code:', data.deviceCode); // Debug log
             // Show device code authentication UI
             showDeviceCodeLogin(data.loginUrl, data.deviceCode, data.demo);
             return;
+        } else {
+            console.error('No device code in response:', data);
+            showAuthStatus('❌ No device code received from server', 'error');
         }
 
         // If we get here, we have a token
