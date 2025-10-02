@@ -1,8 +1,10 @@
 // Azure Authentication Configuration
 const AZURE_CONFIG = {
-    apiBaseUrl: window.location.origin.includes('localhost') ?
-        'http://localhost:3001' : // Development
-        window.location.origin + ':3001' // Production (adjust as needed)
+    apiBaseUrl: window.location.origin.includes('githubpreview.dev') ||
+                 window.location.origin.includes('github.dev') ||
+                 window.location.hostname === 'localhost' ?
+        'http://localhost:3001' : // GitHub Codespaces and local development
+        window.location.origin.replace(/:\d+$/, ':3001') // Replace port with 3001
 };
 
 // Global variables
@@ -41,16 +43,75 @@ async function authenticate() {
 
     userEmail = email;
 
-    showAuthStatus('Getting Azure CLI token...', 'info');
+    showAuthStatus('Starting Azure authentication...', 'info');
 
     try {
-        // Get token from backend API
-        const response = await fetch(`${AZURE_CONFIG.apiBaseUrl}/api/get-azure-token`, {
+        // First, try to login/get token from backend API
+        const response = await fetch(`${AZURE_CONFIG.apiBaseUrl}/api/azure-login`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({ email: userEmail })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to start Azure login');
+        }
+
+        const data = await response.json();
+
+        if (data.loginRequired) {
+            // Show device code authentication UI
+            showDeviceCodeLogin(data.loginUrl, data.deviceCode);
+            return;
+        }
+
+        // If we get here, we have a token
+        accessToken = data.accessToken;
+
+        // Store token in sessionStorage for persistence
+        sessionStorage.setItem('azureAccessToken', accessToken);
+        sessionStorage.setItem('azureUserEmail', userEmail);
+
+        showAuthStatus('Authentication successful!', 'success');
+
+        // Load subscriptions
+        await loadSubscriptions();
+
+    } catch (error) {
+        console.error('Authentication error:', error);
+        showAuthStatus('Authentication failed: ' + error.message, 'error');
+    }
+}
+
+// Show device code login interface
+function showDeviceCodeLogin(loginUrl, deviceCode) {
+    const statusDiv = document.getElementById('auth-status');
+    statusDiv.innerHTML = `
+        <div class="status info">
+            <h3>Complete Azure Authentication</h3>
+            <p><strong>Device Code:</strong> <code>${deviceCode}</code></p>
+            <p><strong>Login URL:</strong> <a href="${loginUrl}" target="_blank">${loginUrl}</a></p>
+            <p>Please open the login URL in your browser and enter the device code above.</p>
+            <button onclick="checkAuthenticationStatus()" class="btn-primary">I've completed authentication</button>
+            <button onclick="showAuthSection()" class="btn-secondary">Cancel</button>
+        </div>
+    `;
+}
+
+// Check authentication status after device code entry
+async function checkAuthenticationStatus() {
+    showAuthStatus('Checking authentication status...', 'info');
+
+    try {
+        // Try to get token from backend API
+        const response = await fetch(`${AZURE_CONFIG.apiBaseUrl}/api/get-azure-token`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
         });
 
         if (!response.ok) {
@@ -71,8 +132,8 @@ async function authenticate() {
         await loadSubscriptions();
 
     } catch (error) {
-        console.error('Authentication error:', error);
-        showAuthStatus('Authentication failed: ' + error.message, 'error');
+        console.error('Authentication check error:', error);
+        showAuthStatus('Authentication check failed: ' + error.message + '. Please try again.', 'error');
     }
 }
 

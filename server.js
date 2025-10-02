@@ -7,7 +7,39 @@ const app = express();
 const PORT = 3001;
 
 // Middleware
-app.use(cors());
+app.use(cors({
+    origin: function (origin, callback) {
+        // Allow requests with no origin (mobile apps, etc.)
+        if (!origin) return callback(null, true);
+
+        // Allow specific origins
+        const allowedOrigins = [
+            'http://localhost:3000',
+            'http://localhost:3001',
+            'https://localhost:3000',
+            'https://localhost:3001'
+        ];
+
+        // Check if origin matches any allowed pattern
+        if (allowedOrigins.some(allowed => origin.startsWith(allowed.replace(':3001', '')))) {
+            return callback(null, true);
+        }
+
+        // For development, allow any localhost origin
+        if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
+            return callback(null, true);
+        }
+
+        // For GitHub Codespaces, allow githubpreview.dev and github.dev
+        if (origin.includes('githubpreview.dev') || origin.includes('github.dev')) {
+            return callback(null, true);
+        }
+
+        console.log('CORS blocked origin:', origin);
+        return callback(new Error('Not allowed by CORS'));
+    },
+    credentials: true
+}));
 app.use(express.json());
 
 // Serve static files
@@ -16,7 +48,84 @@ app.use(express.static(__dirname));
 // Promisify exec for async/await
 const execAsync = util.promisify(exec);
 
-// Azure CLI token endpoint
+// Azure CLI login endpoint
+app.post('/api/azure-login', async (req, res) => {
+    try {
+        console.log('Starting Azure CLI login process...');
+
+        // First try to get existing token
+        try {
+            const { stdout: tokenStdout, stderr: tokenStderr } = await execAsync(
+                'az account get-access-token --resource https://management.azure.com/ --query accessToken -o tsv'
+            );
+
+            if (tokenStderr) {
+                console.error('Azure CLI token stderr:', tokenStderr);
+            }
+
+            const existingToken = tokenStdout.trim();
+
+            if (existingToken && existingToken !== '') {
+                console.log('Existing token found');
+                return res.json({
+                    accessToken: existingToken,
+                    loginRequired: false,
+                    message: 'Token retrieved successfully'
+                });
+            }
+        } catch (tokenError) {
+            // Token retrieval failed, need to login
+            console.log('No existing token, starting login process...');
+        }
+
+        // Execute Azure CLI login command
+        const { stdout, stderr } = await execAsync('az login --use-device-code');
+
+        if (stderr) {
+            console.error('Azure CLI login stderr:', stderr);
+        }
+
+        console.log('Login stdout:', stdout);
+
+        // Parse the device code from the output
+        const deviceCodeMatch = stdout.match(/To sign in, use a web browser to open the page ([^\s]+) and enter the code ([^\s]+) to authenticate/);
+
+        if (deviceCodeMatch) {
+            const loginUrl = deviceCodeMatch[1];
+            const deviceCode = deviceCodeMatch[2];
+
+            console.log('Device code login required');
+            return res.json({
+                loginRequired: true,
+                loginUrl: loginUrl,
+                deviceCode: deviceCode,
+                message: 'Please complete device code authentication'
+            });
+        }
+
+        // If we get here, login might have succeeded
+        res.json({
+            loginRequired: false,
+            message: 'Login completed',
+            output: stdout
+        });
+
+    } catch (error) {
+        console.error('Error in Azure login process:', error);
+
+        if (error.code === 'ENOENT') {
+            return res.status(500).json({
+                error: 'Azure CLI not found. Please install Azure CLI from https://docs.microsoft.com/en-us/cli/azure/install-azure-cli'
+            });
+        }
+
+        res.status(500).json({
+            error: 'Failed to start Azure login: ' + error.message
+        });
+    }
+});
+
+// Azure CLI token endpoint (for getting token after login)
 app.post('/api/get-azure-token', async (req, res) => {
     try {
         console.log('Getting Azure CLI token...');
