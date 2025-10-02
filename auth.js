@@ -2,9 +2,10 @@
 const AZURE_CONFIG = {
     apiBaseUrl: window.location.origin.includes('githubpreview.dev') ||
                  window.location.origin.includes('github.dev') ||
+                 window.location.origin.includes('app.github.dev') ||
                  window.location.hostname === 'localhost' ?
-        'http://localhost:3001' : // GitHub Codespaces and local development
-        window.location.origin.replace(/:\d+$/, ':3001') // Replace port with 3001
+        window.location.origin : // Use the same origin for GitHub Codespaces
+        window.location.origin.replace(/:\d+$/, ':3001') // Replace port with 3001 for local development
 };
 
 // Global variables
