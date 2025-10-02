@@ -51,7 +51,7 @@ const execAsync = util.promisify(exec);
 // Azure CLI login endpoint
 app.post('/api/azure-login', async (req, res) => {
     try {
-        console.log('Starting Azure CLI login process...');
+        console.log('Starting Azure CLI login process from user request...');
 
         // First try to get existing token
         try {
@@ -75,7 +75,7 @@ app.post('/api/azure-login', async (req, res) => {
             }
         } catch (tokenError) {
             // Token retrieval failed, need to login
-            console.log('No existing token, starting login process...');
+            console.log('No existing token, will start login process...');
         }
 
         // Execute Azure CLI login command (no timeout to allow interactive login)
@@ -197,5 +197,5 @@ app.get('/api/health', (req, res) => {
 // Start server
 app.listen(PORT, () => {
     console.log(`Azure authentication server running on http://localhost:${PORT}`);
-    console.log('Make sure Azure CLI is installed and you are logged in with "az login"');
+    console.log('Ready to handle Azure authentication requests');
 });
