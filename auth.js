@@ -74,6 +74,11 @@ async function startAuthentication() {
 
         if (data.loginRequired && data.deviceCode) {
             console.log('Showing device code:', data.deviceCode); // Debug log
+
+            // Hide welcome section and show auth section first
+            document.getElementById('welcome-section').classList.add('hidden');
+            document.getElementById('auth-section').classList.remove('hidden');
+
             // Show device code authentication UI
             showDeviceCodeLogin(data.loginUrl, data.deviceCode, data.demo);
             return;
@@ -160,7 +165,16 @@ function getSelectedSubscriptions() {
 
 // Show device code login interface
 function showDeviceCodeLogin(loginUrl, deviceCode, isDemo = false) {
+    console.log('showDeviceCodeLogin called with:', { loginUrl, deviceCode, isDemo });
+
     const statusDiv = document.getElementById('auth-status');
+    console.log('Status div found:', !!statusDiv);
+
+    if (!statusDiv) {
+        console.error('Auth status div not found!');
+        return;
+    }
+
     const demoNotice = isDemo ? `
         <div class="demo-notice">
             <h4>🔧 DEMO MODE - Azure CLI Not Configured</h4>
@@ -217,6 +231,8 @@ function showDeviceCodeLogin(loginUrl, deviceCode, isDemo = false) {
             </div>
         </div>
     `;
+
+    console.log('Device code HTML set, length:', statusDiv.innerHTML.length);
 }
 
 // Check authentication status after device code entry
