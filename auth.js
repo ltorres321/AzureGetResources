@@ -169,47 +169,56 @@ function getSelectedSubscriptions() {
 function showDeviceCodeLogin(loginUrl, deviceCode, isDemo = false) {
     console.log('showDeviceCodeLogin called with:', { loginUrl, deviceCode, isDemo });
 
-    const statusDiv = document.getElementById('auth-status');
+    // Get the auth-section specifically
+    const authSection = document.getElementById('auth-section');
+    console.log('Auth section found:', !!authSection);
+    
+    if (!authSection) {
+        console.error('Auth section not found!');
+        alert('ERROR: Auth section not found! Device code: ' + deviceCode + ' URL: ' + loginUrl);
+        return;
+    }
+
+    // Get auth-status div within auth-section
+    const statusDiv = authSection.querySelector('#auth-status');
     console.log('Status div found:', !!statusDiv);
 
     if (!statusDiv) {
         console.error('Auth status div not found!');
+        alert('ERROR: Auth status div not found! Device code: ' + deviceCode + ' URL: ' + loginUrl);
         return;
     }
 
-    const demoNotice = isDemo ? `
-        <div class="demo-notice">
-            <h4>🔧 DEMO MODE - Azure CLI Not Configured</h4>
-            <p>This is a demo device code for testing the interface. To use with real Azure authentication, please install and configure Azure CLI.</p>
-        </div>
-    ` : '';
-
-    // Create a more visible and prominent display
-    statusDiv.innerHTML = `
-        <div style="background: #0078d4; color: white; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center;">
-            <h2 style="margin: 0 0 15px 0; color: white;">🔐 Azure Authentication Required</h2>
-            <div style="background: white; color: #0078d4; padding: 20px; border-radius: 8px; margin: 15px 0; font-family: monospace; font-size: 24px; font-weight: bold; letter-spacing: 3px;">
+    // Create a more visible and prominent display with inline styles
+    const deviceCodeHTML = `
+        <div style="background: #0078d4; color: white; padding: 30px; border-radius: 8px; margin: 20px 0; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+            <h2 style="margin: 0 0 20px 0; color: white; font-size: 28px;">🔐 Azure Authentication Required</h2>
+            <div style="background: white; color: #0078d4; padding: 30px; border-radius: 8px; margin: 20px auto; font-family: 'Courier New', monospace; font-size: 36px; font-weight: bold; letter-spacing: 5px; max-width: 500px; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
                 ${deviceCode}
             </div>
-            <p style="margin: 15px 0; font-size: 18px; color: white;">📱 Copy this device code</p>
-            <div style="margin: 15px 0;">
-                <a href="${loginUrl}" target="_blank" style="background: #28a745; color: white; padding: 15px 30px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block; margin: 10px;">
-                    🌐 Open Login Page
+            <p style="margin: 20px 0; font-size: 20px; color: white; font-weight: bold;">📱 COPY THIS DEVICE CODE ABOVE</p>
+            <div style="margin: 20px 0;">
+                <a href="${loginUrl}" target="_blank" style="background: #28a745; color: white; padding: 20px 40px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block; margin: 10px; font-size: 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
+                    🌐 OPEN LOGIN PAGE
                 </a>
             </div>
-            <p style="margin: 15px 0; color: white;">1. Click the button above to open the login page<br>
-            2. Sign in with your Azure credentials<br>
-            3. Enter the device code: <strong>${deviceCode}</strong><br>
-            4. Return here and click "Verify" below</p>
-            <button onclick="checkAuthenticationStatus()" style="background: #ffc107; color: #212529; padding: 15px 30px; border: none; border-radius: 6px; font-weight: bold; font-size: 16px; cursor: pointer; margin: 10px;">
-                ✅ I've Completed Authentication - Verify Now
+            <div style="background: rgba(255,255,255,0.2); padding: 20px; border-radius: 6px; margin: 20px 0; text-align: left; max-width: 600px; margin-left: auto; margin-right: auto;">
+                <p style="margin: 10px 0; color: white; font-size: 16px;"><strong>Step 1:</strong> Click "OPEN LOGIN PAGE" button above</p>
+                <p style="margin: 10px 0; color: white; font-size: 16px;"><strong>Step 2:</strong> Sign in with your Azure credentials</p>
+                <p style="margin: 10px 0; color: white; font-size: 16px;"><strong>Step 3:</strong> Enter device code: <strong style="font-size: 20px;">${deviceCode}</strong></p>
+                <p style="margin: 10px 0; color: white; font-size: 16px;"><strong>Step 4:</strong> Return here and click "Verify" below</p>
+            </div>
+            <button onclick="checkAuthenticationStatus()" style="background: #ffc107; color: #212529; padding: 20px 40px; border: none; border-radius: 6px; font-weight: bold; font-size: 18px; cursor: pointer; margin: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
+                ✅ I'VE COMPLETED AUTHENTICATION - VERIFY NOW
             </button>
         </div>
     `;
 
-    console.log('Device code HTML set, length:', statusDiv.innerHTML.length);
-    console.log('Auth section visibility:', getComputedStyle(document.getElementById('auth-section')).display);
-    console.log('Status div content preview:', statusDiv.innerHTML.substring(0, 200) + '...');
+    statusDiv.innerHTML = deviceCodeHTML;
+    console.log('✅ Device code HTML set successfully! Length:', statusDiv.innerHTML.length);
+    console.log('Auth section display:', getComputedStyle(authSection).display);
+    console.log('Auth section visibility:', getComputedStyle(authSection).visibility);
+    console.log('Status div content set with device code:', deviceCode);
 }
 
 // Check authentication status after device code entry
