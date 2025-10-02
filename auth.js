@@ -61,12 +61,14 @@ async function startAuthentication() {
         });
 
         const data = await response.json();
+        console.log('API Response:', data); // Debug log
 
         if (!response.ok) {
             throw new Error(data.error || 'Failed to start Azure login');
         }
 
         if (data.loginRequired) {
+            console.log('Showing device code:', data.deviceCode); // Debug log
             // Show device code authentication UI
             showDeviceCodeLogin(data.loginUrl, data.deviceCode, data.demo);
             return;
@@ -87,12 +89,14 @@ async function startAuthentication() {
     } catch (error) {
         console.error('Authentication error:', error);
         showAuthStatus('❌ Authentication failed: ' + error.message, 'error');
+        console.log('Error details:', error); // More debug info
     }
 }
 
-// Legacy function for backward compatibility
-async function authenticate() {
-    return startAuthentication();
+// Test function to verify device code display is working
+function testDeviceCodeDisplay() {
+    console.log('Testing device code display...');
+    showDeviceCodeLogin('https://microsoft.com/devicelogin', 'TEST123456');
 }
 
 
