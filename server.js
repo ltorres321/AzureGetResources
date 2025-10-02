@@ -83,7 +83,7 @@ app.post('/api/azure-login', async (req, res) => {
         // Create device code for login (without full login)
         console.log('Attempting to get device code...');
         const { stdout, stderr } = await execAsync(
-            'az login --use-device-code --output json'
+            'az login --use-device-code'
         );
 
         console.log('=== AZURE CLI DEBUG INFO ===');
@@ -91,24 +91,32 @@ app.post('/api/azure-login', async (req, res) => {
         console.log('STDERR:', stderr);
         console.log('============================');
 
-        // Parse JSON output for device code
-        try {
-            const jsonOutput = JSON.parse(stdout);
-            console.log('Parsed JSON:', jsonOutput);
+        // Parse the stderr output for device code and URL
+        const deviceCodeMatch = stderr.match(/To sign in, use a web browser to open the page ([^\s]+) and enter the code ([^\s]+) to authenticate/);
 
-            if (jsonOutput && jsonOutput.user_code && jsonOutput.verification_url) {
-                console.log('Found device code in JSON:', jsonOutput.user_code);
-                return res.json({
-                    loginRequired: true,
-                    loginUrl: jsonOutput.verification_url,
-                    deviceCode: jsonOutput.user_code,
-                    message: 'Please complete device code authentication',
-                    expires_in: jsonOutput.expires_in || 900
-                });
-            }
-        } catch (jsonError) {
-            console.log('JSON parse failed:', jsonError.message);
+        if (deviceCodeMatch) {
+            const loginUrl = deviceCodeMatch[1];
+            const deviceCode = deviceCodeMatch[2];
+
+            console.log('Found device code:', deviceCode);
+            console.log('Found login URL:', loginUrl);
+
+            return res.json({
+                loginRequired: true,
+                loginUrl: loginUrl,
+                deviceCode: deviceCode,
+                message: 'Please complete device code authentication'
+            });
         }
+
+        // If parsing failed, return debug info
+        console.log('Could not parse device code from output');
+        res.status(500).json({
+            error: 'Could not parse device code from Azure CLI output',
+            stdout: stdout,
+            stderr: stderr,
+            debug: 'Expected format: "To sign in, use a web browser to open the page {URL} and enter the code {CODE} to authenticate."'
+        });
 
         // Alternative: Use az login with device code to get the code
         try {
