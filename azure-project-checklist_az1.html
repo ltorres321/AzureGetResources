@@ -1,0 +1,1618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Azure SQL MI Project Turnover Checklist</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #0078d4 0%, #005a9e 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .form-content {
+            padding: 40px;
+        }
+        
+        .section {
+            margin-bottom: 40px;
+        }
+        
+        .section-title {
+            font-size: 20px;
+            color: #0078d4;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #0078d4;
+            font-weight: 600;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: #333;
+        }
+        
+        .form-group input[type="text"],
+        .form-group input[type="date"],
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #0078d4;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        
+        .azure-environments {
+            margin-top: 20px;
+        }
+
+        /* Azure Credential Section */
+        .azure-credentials {
+            background: linear-gradient(135deg, #0078d4 0%, #005a9e 100%);
+            color: white;
+            border-radius: 8px;
+            padding: 25px;
+            margin-bottom: 25px;
+        }
+
+        .credentials-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .credential-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .credential-group label {
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .credential-group input,
+        .credential-group select {
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+
+        .auth-button {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .auth-button:hover {
+            background: #218838;
+        }
+
+        .auth-button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+
+        .auth-status {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .auth-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .auth-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .subscriptions-results {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border: 2px solid #0078d4;
+        }
+
+        .json-output {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        /* New hierarchical Azure MI styles */
+        .subscription-section {
+            background: #f8f9fa;
+            border: 2px solid #0078d4;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+
+        .subscription-field {
+            margin-bottom: 15px;
+        }
+
+        .subscription-field label {
+            display: block;
+            font-weight: 600;
+            color: #0078d4;
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+
+        .subscription-field input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #0078d4;
+            border-radius: 6px;
+            font-size: 14px;
+            background: white;
+        }
+
+        .environments-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .environment-section {
+            background: white;
+            border: 2px solid #28a745;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .environment-header {
+            background: #28a745;
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .environment-title {
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .environment-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .btn-remove-env {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 5px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .environment-content {
+            padding: 20px;
+        }
+
+        .resource-groups-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .resource-group {
+            background: #f8f9fa;
+            border: 2px solid #6f42c1;
+            border-radius: 6px;
+            padding: 15px;
+        }
+
+        .resource-group-header {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .resource-group-title {
+            font-weight: 600;
+            color: #6f42c1;
+            font-size: 14px;
+        }
+
+        .resource-group-field {
+            flex: 1;
+        }
+
+        .resource-group-field input,
+        .resource-group-field select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #6f42c1;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+
+        .btn-remove-rg {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .instances-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .instance-item {
+            background: white;
+            border: 1px solid #6f42c1;
+            border-radius: 4px;
+            padding: 10px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .instance-field {
+            flex: 1;
+        }
+
+        .instance-field input,
+        .instance-field select {
+            width: 100%;
+            padding: 6px;
+            border: 1px solid #6f42c1;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .btn-remove-instance {
+            background: #ffc107;
+            color: #212529;
+            border: none;
+            padding: 3px 8px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 10px;
+        }
+
+        .add-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .btn-add {
+            background: #0078d4;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .btn-add-rg {
+            background: #6f42c1;
+        }
+
+        .btn-add-instance {
+            background: #28a745;
+        }
+
+        .btn-add-env {
+            background: #28a745;
+            font-size: 14px;
+            padding: 10px 20px;
+        }
+
+        .add-env-section {
+            background: #e7f3ff;
+            border: 2px dashed #0078d4;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .environment-collapsed .environment-content {
+            display: none;
+        }
+
+        .toggle-icon {
+            transition: transform 0.3s;
+        }
+
+        .environment-collapsed .toggle-icon {
+            transform: rotate(-90deg);
+        }
+        
+        .checklist-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            table-layout: fixed;
+        }
+
+        .checklist-table tbody tr {
+            display: table-row;
+        }
+        
+        .checklist-table th {
+            background: #f5f5f5;
+            padding: 2px 4px;
+            text-align: center;
+            font-weight: 600;
+            border: 1px solid #ddd;
+            color: #333;
+            vertical-align: middle;
+            height: 20px;
+            line-height: 1.0;
+            font-size: 12px;
+            width: 8.75%;
+        }
+
+        .checklist-table th:first-child {
+            width: 35%;
+        }
+
+        .checklist-table th:nth-child(2) {
+            width: 30%;
+        }
+
+        .checklist-table td {
+            padding: 2px 4px;
+            border: 1px solid #ddd;
+            vertical-align: middle;
+            text-align: center;
+            height: 20px;
+            line-height: 1.0;
+            font-size: 12px;
+            display: table-cell;
+        }
+        
+        .checklist-table td:first-child,
+        .checklist-table td:nth-child(2) {
+            text-align: left;
+        }
+        
+        .checklist-table tr {
+            height: 20px;
+        }
+        
+        .checklist-table tr:hover {
+            background: #f9f9f9;
+        }
+        
+        .task-category {
+            font-weight: 600;
+            color: #0078d4;
+            background: #e7f3ff;
+            height: 20px;
+        }
+        
+
+        
+        /* Compact Horizontal Checkbox Layout - Single checkbox per environment */
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            height: 20px;
+            width: 100%;
+            position: relative;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 14px;
+            height: 14px;
+            cursor: pointer;
+            margin: 0;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        
+        .notes-input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+        
+        .submit-section {
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 2px solid #e0e0e0;
+            text-align: center;
+        }
+        
+        .btn-submit {
+            background: linear-gradient(135deg, #0078d4 0%, #005a9e 100%);
+            color: white;
+            padding: 15px 50px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,120,212,0.3);
+        }
+        
+        .alert-section {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        .alert-section strong {
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Azure SQL MI Project Turnover Checklist</h1>
+            <p>Project Turnover Tasks Completion Tracker</p>
+        </div>
+        
+        <div class="form-content">
+            <form id="checklistForm">
+                <!-- Project Information Section -->
+                <div class="section">
+                    <h2 class="section-title">Project Information</h2>
+                    <div class="grid">
+                        <div class="form-group">
+                            <label for="projectNum">Project #</label>
+                            <input type="text" id="projectNum" name="projectNum" placeholder="Enter project number">
+                        </div>
+                        <div class="form-group">
+                            <label for="projectName">Project Name</label>
+                            <input type="text" id="projectName" name="projectName" placeholder="Enter project name">
+                        </div>
+                        <div class="form-group">
+                            <label for="lineOfBusiness">Line of Business</label>
+                            <input type="text" id="lineOfBusiness" name="lineOfBusiness" value="UHC M&R">
+                        </div>
+                        <div class="form-group">
+                            <label for="goLiveDate">Go-Live Date</label>
+                            <input type="date" id="goLiveDate" name="goLiveDate">
+                        </div>
+                        <div class="form-group">
+                            <label for="presentationDate">Project Presentation Date</label>
+                            <input type="date" id="presentationDate" name="presentationDate">
+                        </div>
+                        <div class="form-group">
+                            <label for="completionDate">Document Completion Date</label>
+                            <input type="date" id="completionDate" name="completionDate">
+                        </div>
+                        <div class="form-group">
+                            <label for="dbaName">Project DBA Name</label>
+                            <input type="text" id="dbaName" name="dbaName" placeholder="Enter DBA name">
+                        </div>
+                        <div class="form-group">
+                            <label for="changeTicket">Go-Live Change Ticket #</label>
+                            <input type="text" id="changeTicket" name="changeTicket" placeholder="Enter ticket number">
+                        </div>
+                        <div class="form-group">
+                            <label for="backupDba">Backup DBA Name (Go-Live)</label>
+                            <input type="text" id="backupDba" name="backupDba" placeholder="Enter backup DBA or NOT REQUIRED">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Source Instance Information -->
+                <div class="section">
+                    <h2 class="section-title">Source Instance Information</h2>
+                    <div class="grid">
+                        <div class="form-group">
+                            <label for="onPremInstanceProd">On Prem Instance Name (Prod)</label>
+                            <input type="text" id="onPremInstanceProd" name="onPremInstanceProd">
+                        </div>
+                        <div class="form-group">
+                            <label for="onPremInstanceStage">On Prem Instance Name (Stage)</label>
+                            <input type="text" id="onPremInstanceStage" name="onPremInstanceStage">
+                        </div>
+                        <div class="form-group">
+                            <label for="onPremInstanceTest">On Prem Instance Name (Test)</label>
+                            <input type="text" id="onPremInstanceTest" name="onPremInstanceTest">
+                        </div>
+                        <div class="form-group">
+                            <label for="onPremInstanceDev">On Prem Instance Name (Dev)</label>
+                            <input type="text" id="onPremInstanceDev" name="onPremInstanceDev">
+                        </div>
+                        <div class="form-group">
+                            <label for="sourceCollation">Source Instance Level Collation</label>
+                            <input type="text" id="sourceCollation" name="sourceCollation">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Azure Authentication & Resource Discovery -->
+                <div class="section">
+                    <h2 class="section-title">Azure Authentication & Resource Discovery</h2>
+
+                    <div class="azure-credentials">
+                        <h3 style="margin-top: 0; color: white;">🔐 Azure Credentials</h3>
+                        <p style="opacity: 0.9; margin-bottom: 20px;">Enter your Azure credentials to discover subscriptions and resources automatically.</p>
+
+                        <!-- Security Notice -->
+                        <div style="background: rgba(255,255,255,0.1); padding: 10px; border-radius: 4px; margin-bottom: 20px; font-size: 12px;">
+                            <strong>⚠️ Security Notice:</strong> This is a development/testing implementation.
+                            For production use, credentials should be handled server-side only.
+                        </div>
+
+                        <div class="credentials-form">
+                            <div class="credential-group">
+                                <label for="tenantId">Azure Tenant ID:</label>
+                                <input type="text" id="tenantId" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" required>
+                            </div>
+                            <div class="credential-group">
+                                <label for="clientId">Application (Client) ID:</label>
+                                <input type="text" id="clientId" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" required>
+                            </div>
+                            <div class="credential-group">
+                                <label for="clientSecret">Client Secret:</label>
+                                <input type="password" id="clientSecret" placeholder="Enter client secret" required>
+                            </div>
+                            <div class="credential-group">
+                                <label for="authMethod">Authentication Method:</label>
+                                <select id="authMethod" required>
+                                    <option value="service-principal">Service Principal</option>
+                                    <option value="device-code">Device Code (Interactive)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <button type="button" class="auth-button" onclick="authenticateAndDiscover()">
+                            🚀 Authenticate & Discover Subscriptions
+                        </button>
+
+                        <div id="authStatus"></div>
+
+                        <div id="subscriptionsResults" class="subscriptions-results" style="display: none;">
+                            <h4>📋 Discovered Subscriptions</h4>
+                            <div id="subscriptionsJson" class="json-output"></div>
+                            <button type="button" class="auth-button" onclick="populateSubscriptionData()" style="margin-top: 15px;">
+                                📝 Use This Data in Form
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Azure SQL MI Environment Details - Improved Hierarchical Design -->
+                <div class="section">
+                    <h2 class="section-title">Azure SQL Managed Instance Details</h2>
+
+                    <!-- Subscription Level -->
+                    <div class="subscription-section">
+                        <div class="subscription-field">
+                            <label for="azureSubscription">Azure Subscription ID:</label>
+                            <input type="text" id="azureSubscription" name="azureSubscription"
+                                   placeholder="Enter Azure Subscription ID (applies to all environments)">
+                        </div>
+                    </div>
+
+                    <!-- Environments Container -->
+                    <div class="environments-container" id="environmentsContainer">
+                        <!-- Dynamic environments will be added here -->
+                    </div>
+
+                    <!-- Add Environment Section -->
+                    <div class="add-env-section">
+                        <button type="button" class="btn-add btn-add-env" onclick="addEnvironment()">
+                            + Add Environment
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Detailed Task Completion Checklist -->
+                <div class="section">
+                    <h2 class="section-title">Detailed Task Completion</h2>
+                    <table class="checklist-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 35%;">Task</th>
+                                <th style="width: 30%;">Detail</th>
+                                <th style="width: 8.75%;">Production</th>
+                                <th style="width: 8.75%;">Stage</th>
+                                <th style="width: 8.75%;">Test</th>
+                                <th style="width: 8.75%;">Dev</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Access & Connectivity -->
+                            <tr class="task-category">
+                                <td colspan="7">Access & Connectivity</td>
+                            </tr>
+                            <tr>
+                                <td>Validate access role</td>
+                                <td>Sysadmin for AZU_MR_MSSQL_DBA</td>
+                                <td class="checkbox-group"><input type="checkbox" name="accessProd"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="accessStage"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="accessTest"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="accessDev"></td>
+                            </tr>
+                            <tr>
+                                <td>Network Connectivity</td>
+                                <td>Cloud SAW</td>
+                                <td class="checkbox-group"><input type="checkbox" name="networkProd"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="networkStage"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="networkTest"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="networkDev"></td>
+                            </tr>
+                            <tr>
+                                <td>VNet Peering/Private Endpoints</td>
+                                <td>Azure Portal</td>
+                                <td class="checkbox-group"><input type="checkbox" name="vnetProd"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="vnetStage"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="vnetTest"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="vnetDev"></td>
+                            </tr>
+                            <tr>
+                                <td>Subscription Access - Contributor</td>
+                                <td>Confirm with each DBA</td>
+                                <td class="checkbox-group"><input type="checkbox" name="subAccessProd"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="subAccessStage"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="subAccessTest"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="subAccessDev"></td>
+                            </tr>
+                            <tr>
+                                <td>AZU_MR_MSSQL_DBA Admin Name</td>
+                                <td>Owns EntraID</td>
+                                <td class="checkbox-group"><input type="checkbox" name="adminProd"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="adminStage"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="adminTest"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="adminDev"></td>
+                            </tr>
+                            <tr>
+                                <td>UHTDBA Database Setup</td>
+                                <td></td>
+                                <td class="checkbox-group"><input type="checkbox" name="uhtdbaProd"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="uhtdbaStage"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="uhtdbaTest"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="uhtdbaDev"></td>
+                            </tr>
+
+                            <!-- SQL Agent Jobs -->
+                            <tr class="task-category">
+                                <td colspan="7">SQL Agent Jobs</td>
+                            </tr>
+                            <tr>
+                                <td>Integrity Check</td>
+                                <td>Runs Successfully & Performance Acceptable</td>
+                                <td class="checkbox-group"><input type="checkbox" name="integrityProd"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="integrityStage"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="integrityTest"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="integrityDev"></td>
+                            </tr>
+                            <tr>
+                                <td>Security Check</td>
+                                <td>Runs Successfully</td>
+                                <td class="checkbox-group"><input type="checkbox" name="secCheckProd"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="secCheckStage"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="secCheckTest"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="secCheckDev"></td>
+                            </tr>
+                            <tr>
+                                <td>Index Rebuild</td>
+                                <td>Compared to On Prem, Performance Acceptable</td>
+                                <td class="checkbox-group"><input type="checkbox" name="indexProd"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="indexStage"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="indexTest"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="indexDev"></td>
+                            </tr>
+
+                            <!-- Backups -->
+                            <tr class="task-category">
+                                <td colspan="7">Backups</td>
+                            </tr>
+                            <tr>
+                                <td>Backups Run Successfully</td>
+                                <td></td>
+                                <td class="checkbox-group"><input type="checkbox" name="backupRunProd"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="backupRunStage"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="backupRunTest"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="backupRunDev"></td>
+                            </tr>
+                            <tr>
+                                <td>Retention Policy</td>
+                                <td>nonprod 14 days - prod 28 days</td>
+                                <td class="checkbox-group"><input type="checkbox" name="retentionProd"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="retentionStage"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="retentionTest"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="retentionDev"></td>
+                            </tr>
+                            <tr>
+                                <td>Tested Restore Successfully</td>
+                                <td></td>
+                                <td class="checkbox-group"><input type="checkbox" name="restoreProd"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="restoreStage"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="restoreTest"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="restoreDev"></td>
+                            </tr>
+
+                            <!-- Security -->
+                            <tr class="task-category">
+                                <td colspan="7">Security</td>
+                            </tr>
+                            <tr>
+                                <td>Database-level Access Review</td>
+                                <td>Logins, Users, Roles</td>
+                                <td class="checkbox-group"><input type="checkbox" name="dbAccessProd"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="dbAccessStage"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="dbAccessTest"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="dbAccessDev"></td>
+                            </tr>
+                            <tr>
+                                <td>Least Privilege Principle</td>
+                                <td>Security Check Job Enabled</td>
+                                <td class="checkbox-group"><input type="checkbox" name="leastPrivProd"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="leastPrivStage"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="leastPrivTest"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="leastPrivDev"></td>
+                            </tr>
+
+                            <!-- Performance Testing -->
+                            <tr class="task-category">
+                                <td colspan="7">Performance Testing Review</td>
+                            </tr>
+                            <tr>
+                                <td>Coordinated with App Team</td>
+                                <td>For each DB/Application</td>
+                                <td class="checkbox-group"><input type="checkbox" name="appCoordProd"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="appCoordStage"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="appCoordTest"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="appCoordDev"></td>
+                            </tr>
+                            <tr>
+                                <td>Documented Findings</td>
+                                <td></td>
+                                <td class="checkbox-group"><input type="checkbox" name="findingsProd"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="findingsStage"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="findingsTest"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="findingsDev"></td>
+                            </tr>
+
+                            <!-- Alerting -->
+                            <tr class="task-category">
+                                <td colspan="7">Alerting & ServiceNow Integration</td>
+                            </tr>
+                            <tr>
+                                <td>Instance Unavailable Alert</td>
+                                <td>Demonstrate Test Alert</td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertUnavailProd"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertUnavailStage"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertUnavailTest"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertUnavailDev"></td>
+                            </tr>
+                            <tr>
+                                <td>Capacity Constrained Alert</td>
+                                <td>Demonstrate Test Alert</td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertCapacityProd"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertCapacityStage"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertCapacityTest"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertCapacityDev"></td>
+                            </tr>
+                            <tr>
+                                <td>Suspect Pages Alert</td>
+                                <td>Demonstrate Test Alert</td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertSuspectProd"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertSuspectStage"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertSuspectTest"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertSuspectDev"></td>
+                                <td>
+                            </tr>
+                            <tr>
+                                <td>Replication Latency Alert</td>
+                                <td>Demonstrate Test Alert</td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertReplicationProd"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertReplicationStage"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertReplicationTest"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertReplicationDev"></td>
+                                <td>
+                            </tr>
+                            <tr>
+                                <td>Tempdb Filling Up Alert</td>
+                                <td>Demonstrate Test Alert</td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertTempdbProd"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertTempdbStage"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertTempdbTest"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertTempdbDev"></td>
+                                <td>
+                            </tr>
+                            <tr>
+                                <td>Daily Backup Threshold Alert</td>
+                                <td>Demonstrate Test Alert</td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertBackupThreshProd"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertBackupThreshStage"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertBackupThreshTest"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertBackupThreshDev"></td>
+                                <td>
+                            </tr>
+                            <tr>
+                                <td>Database Backup Alert</td>
+                                <td>Demonstrate Test Alert</td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertDbBackupProd"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertDbBackupStage"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertDbBackupTest"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertDbBackupDev"></td>
+                                <td>
+                            </tr>
+                            <tr>
+                                <td>Index Maintenance Alert</td>
+                                <td>Demonstrate Test Alert</td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertIndexProd"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertIndexStage"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertIndexTest"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertIndexDev"></td>
+                                <td>
+                            </tr>
+                            <tr>
+                                <td>Integrity Check Alert</td>
+                                <td>Demonstrate Test Alert</td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertIntegrityProd"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertIntegrityStage"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertIntegrityTest"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertIntegrityDev"></td>
+                                <td>
+                            </tr>
+                            <tr>
+                                <td>Failover Event Alert</td>
+                                <td>Demonstrate Test Alert</td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertFailoverProd"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertFailoverStage"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertFailoverTest"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertFailoverDev"></td>
+                                <td>
+                            </tr>
+                            <tr>
+                                <td>Validate Alert Flow End-to-End</td>
+                                <td>Confirm Severity & Routing</td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertFlowProd"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertFlowStage"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertFlowTest"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertFlowDev"></td>                                
+                            </tr>
+                            <tr>
+                                <td>Replication Latency Alert</td>
+                                <td>Demonstrate Test Alert</td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertReplicationProd"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertReplicationStage"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertReplicationTest"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertReplicationDev"></td>
+                                <td>
+                            </tr>
+                            <tr>
+                                <td>Tempdb Filling Up Alert</td>
+                                <td>Demonstrate Test Alert</td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertTempdbProd"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertTempdbStage"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertTempdbTest"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertTempdbDev"></td>
+                                <td>
+                            </tr>
+                            <tr>
+                                <td>Daily Backup Threshold Alert</td>
+                                <td>Demonstrate Test Alert</td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertBackupThreshProd"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertBackupThreshStage"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertBackupThreshTest"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertBackupThreshDev"></td>
+                                <td>
+                            </tr>
+                            <tr>
+                                <td>Database Backup Alert</td>
+                                <td>Demonstrate Test Alert</td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertDbBackupProd"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertDbBackupStage"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertDbBackupTest"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertDbBackupDev"></td>
+                                <td>
+                            </tr>
+                            <tr>
+                                <td>Index Maintenance Alert</td>
+                                <td>Demonstrate Test Alert</td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertIndexProd"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertIndexStage"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertIndexTest"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertIndexDev"></td>
+                                <td>
+                            </tr>
+                            <tr>
+                                <td>Integrity Check Alert</td>
+                                <td>Demonstrate Test Alert</td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertIntegrityProd"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertIntegrityStage"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertIntegrityTest"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertIntegrityDev"></td>
+                                <td>
+                            </tr>
+                            <tr>
+                                <td>Failover Event Alert</td>
+                                <td>Demonstrate Test Alert</td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertFailoverProd"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertFailoverStage"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertFailoverTest"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertFailoverDev"></td>
+                                <td>
+                            </tr>
+                            <tr>
+                                <td>Validate Alert Flow End-to-End</td>
+                                <td>Confirm Severity & Routing</td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertFlowProd"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertFlowStage"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertFlowTest"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertFlowDev"></td>
+                                <td>
+                            </tr>">
+                            
+                            <tr>
+                                <td class="task-detail">Capacity Constrained Alert</td>
+                                <td>Demonstrate Test Alert</td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertCapacityProd"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertCapacityStage"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertCapacityTest"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertCapacityDev"></td>
+                                <td>
+                            </tr>
+                            <tr>
+                                <td class="task-detail">Suspect Pages Alert</td>
+                                <td>Demonstrate Test Alert</td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertSuspectProd"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertSuspectStage"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertSuspectTest"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertSuspectDev"></td>
+                                <td>
+                            </tr>
+                            <tr>
+                                <td class="task-detail">Replication Latency Alert</td>
+                                <td>Demonstrate Test Alert</td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertReplicationProd"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertReplicationStage"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertReplicationTest"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertReplicationDev"></td>
+                                <td>
+                            </tr>
+                            <tr>
+                                <td class="task-detail">Tempdb Filling Up Alert</td>
+                                <td>Demonstrate Test Alert</td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertTempdbProd"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertTempdbStage"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertTempdbTest"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertTempdbDev"></td>
+                                <td>
+                            </tr>
+                            <tr>
+                                <td class="task-detail">Daily Backup Threshold Alert</td>
+                                <td>Demonstrate Test Alert</td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertBackupThreshProd"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertBackupThreshStage"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertBackupThreshTest"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertBackupThreshDev"></td>
+                                <td>
+                            </tr>
+                            <tr>
+                                <td class="task-detail">Database Backup Alert</td>
+                                <td>Demonstrate Test Alert</td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertDbBackupProd"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertDbBackupStage"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertDbBackupTest"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertDbBackupDev"></td>
+                                <td>
+                            </tr>
+                            <tr>
+                                <td class="task-detail">Index Maintenance Alert</td>
+                                <td>Demonstrate Test Alert</td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertIndexProd"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertIndexStage"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertIndexTest"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertIndexDev"></td>
+                                <td>
+                            </tr>
+                            <tr>
+                                <td class="task-detail">Integrity Check Alert</td>
+                                <td>Demonstrate Test Alert</td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertIntegrityProd"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertIntegrityStage"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertIntegrityTest"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertIntegrityDev"></td>
+                                <td>
+                            </tr>
+                            <tr>
+                                <td class="task-detail">Failover Event Alert</td>
+                                <td>Demonstrate Test Alert</td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertFailoverProd"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertFailoverStage"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertFailoverTest"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertFailoverDev"></td>
+                                <td>
+                            </tr>
+                            <tr>
+                                <td class="task-detail">Validate Alert Flow End-to-End</td>
+                                <td>Confirm Severity & Routing</td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertFlowProd"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertFlowStage"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertFlowTest"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="alertFlowDev"></td>
+                                <td>
+                            </tr>
+
+                            <!-- Redgate -->
+                            <tr class="task-category">
+                                <td colspan="7">Redgate</td>
+                            </tr>
+                            <tr>
+                                <td>Added Prod to Redgate</td>
+                                <td></td>
+                                <td class="checkbox-group"><input type="checkbox" name="redgateProd"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="redgateStage"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="redgateTest"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="redgateDev"></td>
+                            </tr>
+                            <tr>
+                                <td>Validate Collections</td>
+                                <td></td>
+                                <td class="checkbox-group"><input type="checkbox" name="redgateCollProd"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="redgateCollStage"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="redgateCollTest"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="redgateCollDev"></td>
+                            </tr>
+
+                            <!-- HA/DR -->
+                            <tr class="task-category">
+                                <td colspan="7">High Availability & Disaster Recovery</td>
+                            </tr>
+                            <tr>
+                                <td>HA Redundancy Method</td>
+                                <td>ZRS, Legacy Replication, LS</td>
+                                <td class="checkbox-group"><input type="checkbox" name="haMethodProd"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="haMethodStage"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="haMethodTest"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="haMethodDev"></td>
+                            </tr>
+                            <tr>
+                                <td>Validate DR Configuration</td>
+                                <td></td>
+                                <td class="checkbox-group"><input type="checkbox" name="drConfigProd"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="drConfigStage"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="drConfigTest"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="drConfigDev"></td>
+                            </tr>
+                            <tr>
+                                <td>Perform DR Failover</td>
+                                <td></td>
+                                <td class="checkbox-group"><input type="checkbox" name="drFailoverProd"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="drFailoverStage"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="drFailoverTest"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="drFailoverDev"></td>
+                            </tr>
+                            <tr>
+                                <td>Validate DR Connectivity During Failover</td>
+                                <td></td>
+                                <td class="checkbox-group"><input type="checkbox" name="drConnProd"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="drConnStage"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="drConnTest"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="drConnDev"></td>
+                            </tr>
+                            <tr>
+                                <td>Successful Failback</td>
+                                <td></td>
+                                <td class="checkbox-group"><input type="checkbox" name="failbackProd"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="failbackStage"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="failbackTest"></td>
+                                <td class="checkbox-group"><input type="checkbox" name="failbackDev"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Important Notes -->
+                <div class="alert-section">
+                    <strong>Important Notes:</strong>
+                    <ul style="margin-left: 20px; margin-top: 10px;">
+                        <li>Modify or add any items in this list if needed for your specific project.</li>
+                        <li>This is a template that includes all required items for project presentation.</li>
+                        <li>Send completed form attached to an email to Projects/Ops meeting host at least a week before your presentation.</li>
+                        <li>Detailed description of the above items is included in the "Project Lifecycle" documentation on SharePoint.</li>
+                    </ul>
+                </div>
+
+                <!-- Submit Section -->
+                <div class="submit-section">
+                    <button type="submit" class="btn-submit">Submit Checklist</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Global counter for unique IDs
+        let environmentCount = 0;
+        let resourceGroupCount = 0;
+        let instanceCount = 0;
+
+        // Azure discovery data
+        let discoveredSubscriptions = [];
+
+        // Add new environment
+        function addEnvironment() {
+            environmentCount++;
+            const container = document.getElementById('environmentsContainer');
+
+            const envDiv = document.createElement('div');
+            envDiv.className = 'environment-section';
+            envDiv.id = `environment-${environmentCount}`;
+
+            envDiv.innerHTML = `
+                <div class="environment-header" onclick="toggleEnvironment(${environmentCount})">
+                    <div class="environment-title">📁 New Environment</div>
+                    <div class="environment-actions">
+                        <button type="button" class="btn-remove-env" onclick="removeEnvironment(${environmentCount})">
+                            Remove
+                        </button>
+                        <span class="toggle-icon">▼</span>
+                    </div>
+                </div>
+                <div class="environment-content">
+                    <div class="resource-groups-container" id="resource-groups-${environmentCount}">
+                        <!-- Resource groups will be added here -->
+                    </div>
+                    <div class="add-buttons">
+                        <button type="button" class="btn-add btn-add-rg" onclick="addResourceGroup(${environmentCount})">
+                            + Add Resource Group
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            container.appendChild(envDiv);
+        }
+
+        // Add resource group to environment
+        function addResourceGroup(environmentId) {
+            resourceGroupCount++;
+            const container = document.getElementById(`resource-groups-${environmentId}`);
+
+            const rgDiv = document.createElement('div');
+            rgDiv.className = 'resource-group';
+            rgDiv.id = `resource-group-${resourceGroupCount}`;
+
+            rgDiv.innerHTML = `
+                <div class="resource-group-header">
+                    <div class="resource-group-title">🔧 New Resource Group</div>
+                    <button type="button" class="btn-remove-rg" onclick="removeResourceGroup(this)">
+                        Remove RG
+                    </button>
+                </div>
+                <div class="resource-group-header">
+                    <div class="resource-group-field">
+                        <label style="font-size: 11px; color: #6f42c1; margin-bottom: 3px;">Resource Group Name:</label>
+                        <input type="text" name="resourceGroupName" placeholder="Resource Group Name" required>
+                    </div>
+                    <div class="resource-group-field">
+                        <label style="font-size: 11px; color: #6f42c1; margin-bottom: 3px;">Primary Region:</label>
+                        <select name="resourceGroupRegion" required>
+                            <option value="">Select Region</option>
+                            <option value="East">East</option>
+                            <option value="East2">East2</option>
+                            <option value="Central">Central</option>
+                            <option value="West">West</option>
+                            <option value="North Central">North Central</option>
+                            <option value="South Central">South Central</option>
+                        </select>
+                    </div>
+                    <div class="resource-group-field">
+                        <label style="font-size: 11px; color: #6f42c1; margin-bottom: 3px;">Failover Region:</label>
+                        <select name="resourceGroupFailoverRegion" required>
+                            <option value="">Select Failover Region</option>
+                            <option value="East">East</option>
+                            <option value="East2">East2</option>
+                            <option value="Central">Central</option>
+                            <option value="West">West</option>
+                            <option value="North Central">North Central</option>
+                            <option value="South Central">South Central</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="instances-container" id="instances-${resourceGroupCount}">
+                    <div class="instance-item">
+                        <div class="instance-field">
+                            <input type="text" name="instanceName" placeholder="Instance Name" required>
+                        </div>
+                        <div class="instance-field">
+                            <select name="instanceFailoverRegion" required>
+                                <option value="">Failover Region</option>
+                                <option value="East">East</option>
+                                <option value="East2">East2</option>
+                                <option value="Central">Central</option>
+                                <option value="West">West</option>
+                                <option value="North Central">North Central</option>
+                                <option value="South Central">South Central</option>
+                            </select>
+                        </div>
+                        <button type="button" class="btn-remove-instance" onclick="removeInstance(this)">
+                            ✕
+                        </button>
+                    </div>
+                </div>
+                <div class="add-buttons">
+                    <button type="button" class="btn-add btn-add-instance" onclick="addInstance(this)">
+                        + Add Instance
+                    </button>
+                </div>
+            `;
+
+            container.appendChild(rgDiv);
+        }
+
+        // Add instance to resource group
+        function addInstance(button) {
+            instanceCount++;
+            const instancesContainer = button.parentElement.parentElement.querySelector('.instances-container');
+
+            const instanceDiv = document.createElement('div');
+            instanceDiv.className = 'instance-item';
+
+            instanceDiv.innerHTML = `
+                <div class="instance-field">
+                    <input type="text" name="instanceName" placeholder="Instance Name" required>
+                </div>
+                <div class="instance-field">
+                    <select name="instanceFailoverRegion" required>
+                        <option value="">Failover Region</option>
+                        <option value="East">East</option>
+                        <option value="East2">East2</option>
+                        <option value="Central">Central</option>
+                        <option value="West">West</option>
+                        <option value="North Central">North Central</option>
+                        <option value="South Central">South Central</option>
+                    </select>
+                </div>
+                <button type="button" class="btn-remove-instance" onclick="removeInstance(this)">
+                    ✕
+                </button>
+            `;
+
+            instancesContainer.appendChild(instanceDiv);
+        }
+
+        // Remove environment
+        function removeEnvironment(environmentId) {
+            if (confirm('Are you sure you want to remove this environment?')) {
+                const element = document.getElementById(`environment-${environmentId}`);
+                element.remove();
+            }
+        }
+
+        // Remove resource group
+        function removeResourceGroup(button) {
+            if (confirm('Are you sure you want to remove this resource group?')) {
+                button.closest('.resource-group').remove();
+            }
+        }
+
+        // Remove instance
+        function removeInstance(button) {
+            button.closest('.instance-item').remove();
+        }
+
+        // Toggle environment visibility
+        function toggleEnvironment(environmentId) {
+            const element = document.getElementById(`environment-${environmentId}`);
+            element.classList.toggle('environment-collapsed');
+        }
+
+        // Azure Authentication and Subscription Discovery
+        async function authenticateAndDiscover() {
+            const tenantId = document.getElementById('tenantId').value.trim();
+            const clientId = document.getElementById('clientId').value.trim();
+            const clientSecret = document.getElementById('clientSecret').value.trim();
+            const authMethod = document.getElementById('authMethod').value;
+
+            // Validate inputs
+            if (!tenantId || !clientId || !clientSecret) {
+                showAuthStatus('Please fill in all credential fields.', 'error');
+                return;
+            }
+
+            // Disable button during authentication
+            const authButton = document.querySelector('.auth-button');
+            const originalText = authButton.textContent;
+            authButton.disabled = true;
+            authButton.textContent = '🔄 Authenticating...';
+
+            try {
+                showAuthStatus('Authenticating with Azure...', 'info');
+
+                // Get access token
+                const tokenResponse = await getAccessToken(tenantId, clientId, clientSecret);
+                const accessToken = tokenResponse.access_token;
+
+                showAuthStatus('✅ Authentication successful! Discovering subscriptions...', 'success');
+
+                // Get subscriptions
+                const subscriptions = await getSubscriptions(accessToken);
+
+                // Store globally for later use
+                discoveredSubscriptions = subscriptions;
+
+                // Display results
+                displaySubscriptionsJson(subscriptions);
+
+                showAuthStatus(`✅ Found ${subscriptions.length} subscription(s)!`, 'success');
+
+            } catch (error) {
+                console.error('Authentication error:', error);
+                showAuthStatus(`❌ Authentication failed: ${error.message}`, 'error');
+            } finally {
+                // Re-enable button
+                authButton.disabled = false;
+                authButton.textContent = originalText;
+            }
+        }
+
+        // Get Azure AD access token
+        async function getAccessToken(tenantId, clientId, clientSecret) {
+            const tokenEndpoint = `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token`;
+
+            const tokenRequest = {
+                client_id: clientId,
+                client_secret: clientSecret,
+                scope: 'https://management.azure.com/.default',
+                grant_type: 'client_credentials'
+            };
+
+            const response = await fetch(tokenEndpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams(tokenRequest)
+            });
+
+            if (!response.ok) {
+                const error = await response.text();
+                throw new Error(`Token request failed: ${response.status} ${error}`);
+            }
+
+            return await response.json();
+        }
+
+        // Get subscriptions using access token
+        async function getSubscriptions(accessToken) {
+            const response = await fetch('https://management.azure.com/subscriptions?api-version=2020-01-01', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                const error = await response.text();
+                throw new Error(`Subscriptions request failed: ${response.status} ${error}`);
+            }
+
+            const data = await response.json();
+            return data.value || [];
+        }
+
+        // Display subscriptions as formatted JSON
+        function displaySubscriptionsJson(subscriptions) {
+            const resultsDiv = document.getElementById('subscriptionsResults');
+            const jsonDiv = document.getElementById('subscriptionsJson');
+
+            // Format subscriptions for display
+            const displayData = subscriptions.map(sub => ({
+                subscriptionId: sub.subscriptionId,
+                subscriptionName: sub.displayName,
+                state: sub.state,
+                location: sub.subscriptionPolicies?.locationPlacementId || 'Not specified',
+                quotaId: sub.subscriptionPolicies?.quotaId || 'Not specified'
+            }));
+
+            jsonDiv.textContent = JSON.stringify(displayData, null, 2);
+            resultsDiv.style.display = 'block';
+
+            // Scroll to results
+            resultsDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        // Show authentication status
+        function showAuthStatus(message, type) {
+            const statusDiv = document.getElementById('authStatus');
+            statusDiv.textContent = message;
+            statusDiv.className = `auth-status auth-${type}`;
+        }
+
+        // Populate form with discovered subscription data
+        function populateSubscriptionData() {
+            if (discoveredSubscriptions.length === 0) {
+                showAuthStatus('No subscription data available. Please authenticate first.', 'error');
+                return;
+            }
+
+            // For now, just populate the subscription field with the first subscription
+            // In a full implementation, you'd present a selection UI
+            const firstSub = discoveredSubscriptions[0];
+            document.getElementById('azureSubscription').value = firstSub.subscriptionId;
+
+            showAuthStatus(`✅ Populated form with subscription: ${firstSub.displayName}`, 'success');
+
+            // Scroll to the Azure MI section
+            document.querySelector('.subscription-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        // Enhanced form submission with hierarchical data collection
+        document.getElementById('checklistForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            // Collect all form data including hierarchical Azure MI data
+            const formData = new FormData(this);
+            const data = {};
+
+            // Collect basic form fields
+            for (let [key, value] of formData.entries()) {
+                if (value === 'on') {
+                    data[key] = true;
+                } else if (key.includes('azureSub') || key.includes('azureRg') ||
+                          key.includes('azureInst') || key.includes('azureRegion') ||
+                          key.includes('azureFailover')) {
+                    // Skip old flat structure fields
+                    continue;
+                } else {
+                    data[key] = value;
+                }
+            }
+
+            // Collect hierarchical Azure MI data
+            const azureData = {
+                subscriptionId: document.getElementById('azureSubscription').value,
+                environments: []
+            };
+
+            document.querySelectorAll('.environment-section').forEach(env => {
+                const environment = {
+                    name: env.querySelector('.environment-title').textContent.replace('📁 ', ''),
+                    resourceGroups: []
+                };
+
+                env.querySelectorAll('.resource-group').forEach(rg => {
+                    const resourceGroup = {
+                        name: rg.querySelector('input[name="resourceGroupName"]').value,
+                        region: rg.querySelector('select[name="resourceGroupRegion"]').value,
+                        failoverRegion: rg.querySelector('select[name="resourceGroupFailoverRegion"]').value,
+                        instances: []
+                    };
+
+                    rg.querySelectorAll('.instance-item').forEach(instance => {
+                        const instanceName = instance.querySelector('input[name="instanceName"]').value;
+                        const failoverRegion = instance.querySelector('select[name="instanceFailoverRegion"]').value;
+
+                        if (instanceName.trim()) {
+                            resourceGroup.instances.push({
+                                name: instanceName,
+                                failoverRegion: failoverRegion
+                            });
+                        }
+                    });
+
+                    if (resourceGroup.name.trim()) {
+                        environment.resourceGroups.push(resourceGroup);
+                    }
+                });
+
+                if (environment.resourceGroups.length > 0) {
+                    azureData.environments.push(environment);
+                }
+            });
+
+            data.azureManagedInstances = azureData;
+
+            // Log to console for debugging
+            console.log('Form Data:', JSON.stringify(data, null, 2));
+            console.log('Hierarchical Azure MI Data:', JSON.stringify(azureData, null, 2));
+
+            alert('Checklist submitted successfully!\n\nCheck the browser console to see the collected data.\n\nHierarchical structure:\n' +
+                  '- Subscription ID (single entry)\n' +
+                  '- Multiple environments\n' +
+                  '- Multiple resource groups per environment\n' +
+                  '- Multiple instances per resource group');
+        });
+    </script>
+</body>
+</html>
