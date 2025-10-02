@@ -10,18 +10,30 @@
     <div class="container">
         <h1>Azure Resource Manager</h1>
 
-        <!-- Authentication Section -->
-        <div id="auth-section" class="section">
-            <h2>Azure Authentication</h2>
+        <!-- Welcome Section with Instructions -->
+        <div id="welcome-section" class="section">
+            <h2>Welcome! Let's get you authenticated with Azure</h2>
+            <div class="instructions">
+                <p><strong>Step 1:</strong> Enter your Azure email address below</p>
+                <p><strong>Step 2:</strong> We'll generate a device code and login URL for you</p>
+                <p><strong>Step 3:</strong> Open the login URL and enter the device code to authenticate</p>
+                <p><strong>Step 4:</strong> Come back here and we'll verify your authentication</p>
+            </div>
+
             <div class="form-group">
-                <label for="email">Azure Email:</label>
+                <label for="email">Azure Email Address:</label>
                 <input type="email" id="email" placeholder="user@tenant.onmicrosoft.com" required>
             </div>
 
-            <button id="authenticate-btn" onclick="authenticate()">Authenticate with Azure</button>
+            <button id="start-auth-btn" onclick="startAuthentication()" class="btn-primary">
+                🚀 Start Azure Authentication
+            </button>
 
             <div id="auth-status"></div>
         </div>
+
+        <!-- Authentication Section (shown after starting auth) -->
+        <div id="auth-section" class="section hidden">
 
         <!-- Subscription Selection Section -->
         <div id="subscription-section" class="section hidden">

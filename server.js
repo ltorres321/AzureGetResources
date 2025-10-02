@@ -48,6 +48,79 @@ app.use(express.static(__dirname));
 // Promisify exec for async/await
 const execAsync = util.promisify(exec);
 
+// Azure CLI login endpoint
+app.post('/api/azure-login', async (req, res) => {
+    try {
+        console.log('Starting Azure CLI device code login...');
+
+        // First check if already logged in
+        try {
+            const { stdout: tokenStdout } = await execAsync(
+                'az account get-access-token --resource https://management.azure.com/ --query accessToken -o tsv'
+            );
+            const existingToken = tokenStdout.trim();
+
+            if (existingToken && existingToken !== '') {
+                return res.json({
+                    accessToken: existingToken,
+                    loginRequired: false,
+                    message: 'Already logged in'
+                });
+            }
+        } catch (tokenError) {
+            // Not logged in, continue with device code flow
+        }
+
+        // Use a different approach - create a device code without full login
+        const { stdout, stderr } = await execAsync(
+            'az login --use-device-code --output json'
+        );
+
+        console.log('Login stdout:', stdout);
+        console.log('Login stderr:', stderr);
+
+        // Parse JSON output for device code
+        try {
+            const jsonOutput = JSON.parse(stdout);
+            if (jsonOutput && jsonOutput.user_code && jsonOutput.verification_url) {
+                return res.json({
+                    loginRequired: true,
+                    loginUrl: jsonOutput.verification_url,
+                    deviceCode: jsonOutput.user_code,
+                    message: 'Please complete device code authentication',
+                    expires_in: jsonOutput.expires_in || 900
+                });
+            }
+        } catch (jsonError) {
+            console.log('JSON parse failed');
+        }
+
+        // Fallback: parse from stderr
+        const deviceCodeMatch = stderr.match(/To sign in, use a web browser to open the page ([^\s]+) and enter the code ([^\s]+) to authenticate/);
+        if (deviceCodeMatch) {
+            return res.json({
+                loginRequired: true,
+                loginUrl: deviceCodeMatch[1],
+                deviceCode: deviceCodeMatch[2],
+                message: 'Please complete device code authentication'
+            });
+        }
+
+        // If we get here, return the raw output for debugging
+        res.status(500).json({
+            error: 'Could not parse device code',
+            stdout: stdout,
+            stderr: stderr
+        });
+
+    } catch (error) {
+        console.error('Error in Azure login:', error);
+        res.status(500).json({
+            error: 'Failed to start Azure login: ' + error.message,
+            details: error.stderr || 'No additional details'
+        });
+    }
+});
 
 // Azure CLI token endpoint (for getting token after login)
 app.post('/api/get-azure-token', async (req, res) => {

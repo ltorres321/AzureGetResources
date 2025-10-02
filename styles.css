@@ -391,6 +391,246 @@ button#start-over-btn:hover {
     margin-right: 8px;
 }
 
+/* Device Code Authentication Styles */
+.device-code-container {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 12px;
+    padding: 30px;
+    margin: 20px 0;
+    border: 2px solid #0078d4;
+    box-shadow: 0 4px 12px rgba(0, 120, 212, 0.15);
+}
+
+.device-code-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.device-code-header h3 {
+    color: #0078d4;
+    font-size: 1.4rem;
+    margin-bottom: 10px;
+    font-weight: 600;
+}
+
+.instructions {
+    color: #6c757d;
+    font-size: 1rem;
+    margin-bottom: 0;
+}
+
+.device-code-display {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 25px;
+    margin-bottom: 30px;
+}
+
+.code-section,
+.url-section {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+.code-section h4,
+.url-section h4 {
+    color: #495057;
+    font-size: 1.1rem;
+    margin-bottom: 15px;
+    font-weight: 600;
+}
+
+.device-code-box {
+    background: #0078d4;
+    color: white;
+    font-family: 'Courier New', monospace;
+    font-size: 2rem;
+    font-weight: bold;
+    padding: 20px;
+    border-radius: 8px;
+    letter-spacing: 3px;
+    word-break: break-all;
+    box-shadow: 0 4px 8px rgba(0, 120, 212, 0.3);
+}
+
+.code-instruction,
+.url-instruction {
+    color: #6c757d;
+    font-size: 0.9rem;
+    margin-top: 10px;
+}
+
+.login-url {
+    margin: 15px 0;
+}
+
+.login-link {
+    display: inline-block;
+    background: #28a745;
+    color: white;
+    text-decoration: none;
+    padding: 12px 20px;
+    border-radius: 6px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    word-break: break-all;
+    max-width: 100%;
+    box-shadow: 0 2px 4px rgba(40, 167, 69, 0.3);
+}
+
+.login-link:hover {
+    background: #218838;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(40, 167, 69, 0.4);
+}
+
+.step-by-step {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 25px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.step-by-step h4 {
+    color: #495057;
+    margin-bottom: 15px;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.step-by-step ol {
+    padding-left: 20px;
+}
+
+.step-by-step li {
+    margin-bottom: 8px;
+    color: #6c757d;
+    line-height: 1.5;
+}
+
+.step-by-step li strong {
+    color: #495057;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.btn-primary {
+    background-color: #0078d4;
+    color: white;
+    border: none;
+    padding: 15px 30px;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 120, 212, 0.3);
+}
+
+.btn-primary:hover {
+    background-color: #106ebe;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 120, 212, 0.4);
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    padding: 15px 30px;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(108, 117, 125, 0.3);
+}
+
+.btn-secondary:hover {
+    background-color: #5a6268;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(108, 117, 125, 0.4);
+}
+
+.btn-large {
+    padding: 18px 35px;
+    font-size: 18px;
+}
+
+.waiting-note {
+    text-align: center;
+    padding: 15px;
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 6px;
+    color: #856404;
+}
+
+.waiting-note p {
+    margin: 0;
+    font-weight: 500;
+}
+
+/* Enhanced status messages for device code flow */
+.status.info {
+    background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
+    border: 2px solid #17a2b8;
+    color: #0c5460;
+    font-size: 1.1rem;
+    padding: 15px;
+    text-align: center;
+}
+
+/* Responsive design for device code */
+@media (max-width: 768px) {
+    .device-code-display {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    .device-code-box {
+        font-size: 1.5rem;
+        padding: 15px;
+        letter-spacing: 2px;
+    }
+
+    .action-buttons {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .btn-primary,
+    .btn-secondary {
+        width: 100%;
+        max-width: 300px;
+    }
+}
+
+@media (max-width: 480px) {
+    .device-code-container {
+        padding: 20px 15px;
+    }
+
+    .step-by-step {
+        padding: 15px;
+    }
+
+    .code-section,
+    .url-section {
+        padding: 15px;
+    }
+}
+
 /* Utility classes */
 .text-center {
     text-align: center;

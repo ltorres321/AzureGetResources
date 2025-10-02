@@ -31,23 +31,27 @@ function showResultsSection() {
     document.getElementById('results-section').classList.remove('hidden');
 }
 
-// Authenticate with Azure using CLI
-async function authenticate() {
+// Start the authentication process (called when user clicks start button)
+async function startAuthentication() {
     const emailInput = document.getElementById('email');
     const email = emailInput.value.trim();
 
     if (!email) {
-        showAuthStatus('Please enter your Azure email address.', 'error');
+        showAuthStatus('Please enter your Azure email address first.', 'error');
         return;
     }
 
     userEmail = email;
 
-    showAuthStatus('Getting Azure CLI token...', 'info');
+    // Hide welcome section and show auth section
+    document.getElementById('welcome-section').classList.add('hidden');
+    document.getElementById('auth-section').classList.remove('hidden');
+
+    showAuthStatus('🔄 Starting Azure authentication process...', 'info');
 
     try {
-        // Get token from backend API
-        const response = await fetch(`${AZURE_CONFIG.apiBaseUrl}/api/get-azure-token`, {
+        // First, try to get device code for login
+        const response = await fetch(`${AZURE_CONFIG.apiBaseUrl}/api/azure-login`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -58,29 +62,36 @@ async function authenticate() {
         const data = await response.json();
 
         if (!response.ok) {
-            if (data.needsLogin) {
-                // Show manual login instructions
-                showAuthStatus(`Authentication failed: ${data.error}. Please run "az login" in your terminal first, then refresh this page and try again.`, 'error');
-                return;
-            }
-            throw new Error(data.error || 'Failed to get Azure token');
+            throw new Error(data.error || 'Failed to start Azure login');
         }
 
+        if (data.loginRequired) {
+            // Show device code authentication UI
+            showDeviceCodeLogin(data.loginUrl, data.deviceCode);
+            return;
+        }
+
+        // If we get here, we have a token
         accessToken = data.accessToken;
 
         // Store token in sessionStorage for persistence
         sessionStorage.setItem('azureAccessToken', accessToken);
         sessionStorage.setItem('azureUserEmail', userEmail);
 
-        showAuthStatus('Authentication successful!', 'success');
+        showAuthStatus('✅ Authentication successful!', 'success');
 
         // Load subscriptions
         await loadSubscriptions();
 
     } catch (error) {
         console.error('Authentication error:', error);
-        showAuthStatus('Authentication failed: ' + error.message, 'error');
+        showAuthStatus('❌ Authentication failed: ' + error.message, 'error');
     }
+}
+
+// Legacy function for backward compatibility
+async function authenticate() {
+    return startAuthentication();
 }
 
 
@@ -132,6 +143,99 @@ function displaySubscriptions() {
 function getSelectedSubscriptions() {
     const checkboxes = document.querySelectorAll('#subscriptions-list input[type="checkbox"]:checked');
     return Array.from(checkboxes).map(cb => cb.value);
+}
+
+// Show device code login interface
+function showDeviceCodeLogin(loginUrl, deviceCode) {
+    const statusDiv = document.getElementById('auth-status');
+    statusDiv.innerHTML = `
+        <div class="device-code-container">
+            <div class="device-code-header">
+                <h3>🔐 Complete Your Azure Authentication</h3>
+                <p class="instructions">Follow these steps to authenticate:</p>
+            </div>
+
+            <div class="device-code-display">
+                <div class="code-section">
+                    <h4>📱 Your Device Code:</h4>
+                    <div class="device-code-box">${deviceCode}</div>
+                    <p class="code-instruction">Copy this code - you'll need to enter it in the next step</p>
+                </div>
+
+                <div class="url-section">
+                    <h4>🌐 Login URL:</h4>
+                    <div class="login-url">
+                        <a href="${loginUrl}" target="_blank" class="login-link">${loginUrl}</a>
+                    </div>
+                    <p class="url-instruction">Click the link above or copy and paste it into your browser</p>
+                </div>
+            </div>
+
+            <div class="step-by-step">
+                <h4>Step-by-Step Instructions:</h4>
+                <ol>
+                    <li><strong>Open your web browser</strong> and navigate to the login URL above</li>
+                    <li><strong>Sign in</strong> with your Azure credentials when prompted</li>
+                    <li><strong>Enter the device code</strong> <code>${deviceCode}</code> when asked</li>
+                    <li><strong>Complete the authentication</strong> in your browser</li>
+                    <li><strong>Return here</strong> and click the button below to verify</li>
+                </ol>
+            </div>
+
+            <div class="action-buttons">
+                <button onclick="checkAuthenticationStatus()" class="btn-primary btn-large">
+                    ✅ I've completed authentication - Verify Now
+                </button>
+                <button onclick="startOver()" class="btn-secondary">
+                    🔄 Start Over
+                </button>
+            </div>
+
+            <div class="waiting-note">
+                <p>⏳ <strong>Waiting for authentication...</strong> This process is secure and your credentials are protected.</p>
+            </div>
+        </div>
+    `;
+}
+
+// Check authentication status after device code entry
+async function checkAuthenticationStatus() {
+    showAuthStatus('Checking authentication status...', 'info');
+
+    try {
+        // Try to get token from backend API
+        const response = await fetch(`${AZURE_CONFIG.apiBaseUrl}/api/get-azure-token`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            if (errorData.needsLogin) {
+                showAuthStatus('Authentication not completed yet. Please complete the device code authentication in your browser first.', 'error');
+                return;
+            }
+            throw new Error(errorData.error || 'Failed to get Azure token');
+        }
+
+        const data = await response.json();
+        accessToken = data.accessToken;
+
+        // Store token in sessionStorage for persistence
+        sessionStorage.setItem('azureAccessToken', accessToken);
+        sessionStorage.setItem('azureUserEmail', userEmail);
+
+        showAuthStatus('Authentication successful!', 'success');
+
+        // Load subscriptions
+        await loadSubscriptions();
+
+    } catch (error) {
+        console.error('Authentication check error:', error);
+        showAuthStatus('Authentication check failed: ' + error.message + '. Please try again.', 'error');
+    }
 }
 
 // Show authentication status
