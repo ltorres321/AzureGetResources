@@ -1,9 +1,8 @@
 // Azure Authentication Configuration
 const AZURE_CONFIG = {
-    tenantId: '', // Will be extracted from email
-    clientId: 'YOUR_AZURE_APP_CLIENT_ID', // Replace with your Azure AD app client ID
-    redirectUri: window.location.origin,
-    scopes: ['https://management.azure.com/.default']
+    apiBaseUrl: window.location.origin.includes('localhost') ?
+        'http://localhost:3001' : // Development
+        window.location.origin + ':3001' // Production (adjust as needed)
 };
 
 // Global variables
@@ -30,22 +29,7 @@ function showResultsSection() {
     document.getElementById('results-section').classList.remove('hidden');
 }
 
-// Extract tenant ID from email
-function extractTenantId(email) {
-    const parts = email.split('@');
-    if (parts.length === 2) {
-        const domain = parts[1];
-        // For Microsoft accounts, use common tenant
-        if (domain.includes('outlook.com') || domain.includes('hotmail.com') || domain.includes('live.com')) {
-            return 'common';
-        }
-        // For Azure AD accounts, use the domain as tenant ID
-        return domain;
-    }
-    return 'common';
-}
-
-// Authenticate with Azure
+// Authenticate with Azure using CLI
 async function authenticate() {
     const emailInput = document.getElementById('email');
     const email = emailInput.value.trim();
@@ -56,23 +40,35 @@ async function authenticate() {
     }
 
     userEmail = email;
-    const tenantId = extractTenantId(email);
-    AZURE_CONFIG.tenantId = tenantId;
 
-    showAuthStatus('Starting authentication...', 'info');
+    showAuthStatus('Getting Azure CLI token...', 'info');
 
     try {
-        // Step 1: Get authorization code
-        const authUrl = `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/authorize?` +
-            `client_id=${AZURE_CONFIG.clientId}&` +
-            `response_type=code&` +
-            `redirect_uri=${encodeURIComponent(AZURE_CONFIG.redirectUri)}&` +
-            `scope=${encodeURIComponent(AZURE_CONFIG.scopes.join(' '))}&` +
-            `state=${Date.now()}&` +
-            `prompt=consent`;
+        // Get token from backend API
+        const response = await fetch(`${AZURE_CONFIG.apiBaseUrl}/api/get-azure-token`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email: userEmail })
+        });
 
-        // Open authentication popup
-        openAuthPopup(authUrl);
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to get Azure token');
+        }
+
+        const data = await response.json();
+        accessToken = data.accessToken;
+
+        // Store token in sessionStorage for persistence
+        sessionStorage.setItem('azureAccessToken', accessToken);
+        sessionStorage.setItem('azureUserEmail', userEmail);
+
+        showAuthStatus('Authentication successful!', 'success');
+
+        // Load subscriptions
+        await loadSubscriptions();
 
     } catch (error) {
         console.error('Authentication error:', error);
@@ -80,74 +76,6 @@ async function authenticate() {
     }
 }
 
-// Open authentication popup
-function openAuthPopup(authUrl) {
-    const popup = document.getElementById('auth-popup');
-    const authFrame = document.getElementById('auth-frame');
-
-    authFrame.src = authUrl;
-    popup.classList.remove('hidden');
-
-    // Listen for messages from the popup
-    window.addEventListener('message', handleAuthMessage, { once: true });
-}
-
-// Close authentication popup
-function closeAuthPopup() {
-    const popup = document.getElementById('auth-popup');
-    popup.classList.add('hidden');
-    const authFrame = document.getElementById('auth-frame');
-    authFrame.src = '';
-}
-
-// Handle authentication messages from popup
-async function handleAuthMessage(event) {
-    closeAuthPopup();
-
-    if (event.data.type === 'auth_success') {
-        const { code } = event.data;
-
-        try {
-            // Step 2: Exchange code for token
-            await exchangeCodeForToken(code);
-            showAuthStatus('Authentication successful!', 'success');
-
-            // Step 3: Get subscriptions
-            await loadSubscriptions();
-
-        } catch (error) {
-            console.error('Token exchange error:', error);
-            showAuthStatus('Token exchange failed: ' + error.message, 'error');
-        }
-    } else if (event.data.type === 'auth_error') {
-        showAuthStatus('Authentication cancelled or failed.', 'error');
-    }
-}
-
-// Exchange authorization code for access token
-async function exchangeCodeForToken(code) {
-    const tokenEndpoint = `https://login.microsoftonline.com/${AZURE_CONFIG.tenantId}/oauth2/v2.0/token`;
-
-    const tokenData = new URLSearchParams({
-        client_id: AZURE_CONFIG.clientId,
-        grant_type: 'authorization_code',
-        code: code,
-        redirect_uri: AZURE_CONFIG.redirectUri,
-        scope: AZURE_CONFIG.scopes.join(' ')
-    });
-
-    const response = await axios.post(tokenEndpoint, tokenData, {
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
-        }
-    });
-
-    accessToken = response.data.access_token;
-
-    // Store token in sessionStorage for persistence
-    sessionStorage.setItem('azureAccessToken', accessToken);
-    sessionStorage.setItem('azureUserEmail', userEmail);
-}
 
 // Load user subscriptions
 async function loadSubscriptions() {

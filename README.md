@@ -1,140 +1,76 @@
 # Azure Resource Manager
 
-A web application that authenticates with Azure and pulls all resources by subscription into a JSON file.
+A web application to browse and manage Azure resources using Azure CLI authentication.
 
 ## Features
 
-- 🔐 Azure OAuth 2.0 authentication
-- 📋 Multi-subscription support with selection
-- 🌐 Fetches resources from all resource groups and subscription level
-- 📊 Displays resource summary statistics
-- 💾 Downloads results as JSON file
-- 🎨 Clean, responsive web interface
+- 🔐 Azure CLI-based authentication (no Azure AD app registration required)
+- 📋 Browse Azure subscriptions
+- 🔍 List all Azure resources across subscriptions
+- 💾 Export resource data as JSON
+- 🎨 Modern, responsive UI
 
 ## Prerequisites
 
-### Azure AD Application Registration
+1. **Azure CLI** installed and configured
+   - Download from: https://docs.microsoft.com/en-us/cli/azure/install-azure-cli
+   - Log in with: `az login`
 
-Before using this application, you need to register an Azure AD application:
+2. **Node.js** (version 14 or higher)
+   - Download from: https://nodejs.org/
 
-1. Go to the [Azure Portal](https://portal.azure.com)
-2. Navigate to **Azure Active Directory** > **App registrations**
-3. Click **New registration**
-4. Enter a name for your application (e.g., "Azure Resource Manager")
-5. Select **Single Page Application (SPA)** as the platform type
-6. Add your redirect URI: `http://localhost:3000` (or your deployed URL)
-7. Click **Register**
+## Setup Instructions
 
-### API Permissions
+1. **Install backend dependencies:**
+   ```bash
+   npm install
+   ```
 
-After registration, configure API permissions:
+2. **Login to Azure CLI:**
+   ```bash
+   az login
+   ```
+   Follow the browser-based authentication process.
 
-1. In your app registration, go to **API permissions**
-2. Click **Add a permission**
-3. Select **Microsoft Graph** > **Delegated permissions**
-4. Add `User.Read` permission
-5. Click **Add a permission** again
-6. Select **APIs my organization uses** > Search for "Azure Service Management"
-7. Select **Azure Service Management** > **Delegated permissions**
-8. Add `user_impersonation` permission
-9. Click **Grant admin consent**
+3. **Start the backend server:**
+   ```bash
+   npm start
+   ```
+   The server will run on http://localhost:3001
 
-### Client ID
+4. **Open the application:**
+   - Open `index.html` in your web browser
+   - Or serve it using a local web server if needed
 
-Note down your application's **Application (client) ID** - you'll need this in the code.
+## How It Works
 
-## Setup
-
-1. **Clone or download** the project files
-2. **Open `auth.js`** and replace `YOUR_AZURE_APP_CLIENT_ID` with your actual client ID:
-
-```javascript
-const AZURE_CONFIG = {
-    clientId: 'your-actual-client-id-here', // Replace this line
-    // ... rest of config
-};
-```
-
-3. **Open `index.html`** in a web browser or serve it using a local server
-
-## Usage
-
-1. **Enter your Azure email** (user@tenant.onmicrosoft.com)
-2. **Click "Authenticate with Azure"**
-3. **Sign in** to your Azure account in the popup
-4. **Select subscriptions** you want to fetch resources from
-5. **Click "Fetch All Resources"**
-6. **View results** and click "Download as JSON" to save
-
-## File Structure
-
-```
-├── index.html      # Main HTML interface
-├── auth.js         # Azure OAuth authentication logic
-├── resources.js    # Resource fetching and management
-├── styles.css      # CSS styling
-└── README.md       # This file
-```
-
-## Azure Resource Data
-
-The JSON output includes the following information for each resource:
-
-- `subscriptionId` - Azure subscription ID
-- `subscriptionName` - Display name of the subscription
-- `resourceGroupName` - Name of the resource group (null for subscription-level resources)
-- `resourceId` - Full Azure resource ID
-- `resourceName` - Resource name
-- `resourceType` - Azure resource type (e.g., Microsoft.Compute/virtualMachines)
-- `location` - Azure region
-- `tags` - Resource tags object
-- `sku` - SKU information (if applicable)
-- `kind` - Resource kind (if applicable)
-- `managedBy` - Managing resource ID (if applicable)
-- `createdTime` - Resource creation timestamp
-- `changedTime` - Last modification timestamp
-- `provisioningState` - Current provisioning state
-
-## Security Notes
-
-- Access tokens are stored in browser sessionStorage (not persistent)
-- The application only requests the minimum required permissions
-- No data is sent to external servers except Azure APIs
-- Consider using HTTPS in production for enhanced security
-
-## Browser Compatibility
-
-- Modern browsers with ES6+ support
-- Chrome, Firefox, Safari, Edge (recent versions)
-- Internet Explorer 11+ (with polyfills)
+1. **Authentication**: The app uses your Azure CLI login session to get an access token for Azure Resource Manager APIs
+2. **Subscription Selection**: Choose which Azure subscriptions to scan
+3. **Resource Discovery**: Fetches all resources from selected subscriptions
+4. **Export**: Download the resource data as JSON
 
 ## Troubleshooting
 
-### Authentication Issues
+### "Failed to get Azure token"
+- Make sure you're logged in to Azure CLI: `az login`
+- Ensure Azure CLI is properly installed
+- Check that the backend server is running on port 3001
 
-- Ensure your Azure AD app is properly configured
-- Check that redirect URI matches your setup
-- Verify API permissions are granted
-
-### Resource Fetching Issues
-
-- Check that your account has read permissions on the subscriptions
-- Some resources might not be accessible due to RBAC restrictions
-- Large subscriptions may take time to fetch all resources
+### "Authentication failed"
+- Verify your Azure CLI login is still valid
+- Try logging out and back in: `az logout` then `az login`
+- Check browser console for detailed error messages
 
 ### CORS Issues
+- The backend server includes CORS support
+- Make sure you're accessing the app through a web server (not file:// protocol)
 
-- Serve the files through a web server (not file:// protocol)
-- Use a simple HTTP server: `python -m http.server` or `npx serve`
+## Architecture
 
-## Development
+- **Frontend**: Pure HTML/CSS/JavaScript (no frameworks)
+- **Backend**: Node.js/Express server for Azure CLI integration
+- **Authentication**: Uses Azure CLI's access token for ARM API calls
 
-To modify or extend the application:
+## Security Note
 
-1. **Authentication**: Modify `auth.js` for OAuth flow changes
-2. **Resource fetching**: Update `resources.js` for different Azure APIs
-3. **UI changes**: Edit `index.html` and `styles.css`
-
-## License
-
-This project is provided as-is for educational and internal business use.
+This application uses your Azure CLI authentication session, so it inherits the same permissions as your CLI login. Make sure you're logged in with appropriate permissions for the subscriptions you want to access.
