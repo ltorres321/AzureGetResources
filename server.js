@@ -10,6 +10,9 @@ const PORT = 3001;
 app.use(cors());
 app.use(express.json());
 
+// Serve static files
+app.use(express.static(__dirname));
+
 // Promisify exec for async/await
 const execAsync = util.promisify(exec);
 
@@ -57,6 +60,11 @@ app.post('/api/get-azure-token', async (req, res) => {
             error: 'Failed to get Azure token: ' + error.message
         });
     }
+});
+
+// Serve index.html for root path
+app.get('/', (req, res) => {
+    res.sendFile(__dirname + '/index.html');
 });
 
 // Health check endpoint
